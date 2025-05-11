@@ -32,24 +32,20 @@ bool constraint_propagation(Board **board){
         col_mask[i] = scan_col(board, i);
         box_mask[i] = scan_box(board, i);
     }
-
+    
     #pragma omp for
-    for(int i = 0; i < N; i++){
-        for(int j = 0; j < N; j++){                                             // looping for the number of values in a row.
-            int index = j + i * N;
-            Cell *cell = &(*board)->cells[index];
-            if(cell->remainder == 0) continue;
-            cell->candidates |= row_mask;                      // update the candidates
-            cell->remainder = pop_count(cell->candidates); // update the remaining count
-        }
+    for(int i = 0; i < NUM_CELLS; i++){
+        int position = i / 9;                 // the current row, column, or box
 
-        for(int j = 0; j < N; j++){
-            int index = i + j * N;
-            Cell *cell = &(*board)->cells[index];    
-            if(cell->remainder == 0) continue;
-            cell->candidates |= col_mask;
-            cell->remainder = pop_count(cell->candidates);
-        }
+        Cell *cell = &(*board)->cells[i];
+        if(cell->remainder == 0) continue;
+        cell->candidates |= row_mask[position];                      // update the candidates
+        cell->remainder = pop_count(cell->candidates); // update the remaining count
+
+        Cell *cell = &(*board)->cells[i % 9 + position];    
+        if(cell->remainder == 0) continue;
+        cell->candidates |= col_mask[position];
+        cell->remainder = pop_count(cell->candidates);
 
         int box_row = (i / n) * n;                                              // row position of the top left of the box
         int box_column = (i % n) * n;                                           // column position of the top left of the box
