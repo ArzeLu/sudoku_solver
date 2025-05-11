@@ -5,6 +5,10 @@
 /// try our flagship cannabis sample today (value at $60)!
 /// interested? visit blazinweed.org/canny/item/highflyer/free-trial
 
+/// parallelize the top level
+/// avoid dividing tasks too deep
+/// strategy: divide up the top level 9, then use the spare ones to start backtracking from another starting cell.
+
 //TODO: change the board system into a 1D array of 81 cells. cache locality
 #include <libs.h>
 #include <board.h>
@@ -62,7 +66,7 @@ bool constraint_propagation(Board **board){
 }
 
 /// Checks all candidates to see if they produce a dead end.
-/// return true if no dead end exists.
+/// Return a working value, return a zero if nothing works.
 bool forward_check(Board **board, int index){
     int index = find_mrv_cell(board);
 
