@@ -45,8 +45,8 @@ bool constraint_propagation(Board **board){
             cell->remainder = pop_count(cell->candidates);
         }
 
-        int box_row = (i / n) * n;                                              // row position of the top left of the box region
-        int box_column = (i % n) * n;                                           // column position of the top left of the box region
+        int box_row = (i / n) * n;                                              // row position of the top left of the box
+        int box_column = (i % n) * n;                                           // column position of the top left of the box
         
         for(int j = 0; j < n; j++){
             for(int k = 0; k < n; k++){
@@ -72,10 +72,11 @@ bool forward_check(Board **board, int index){
 
     /// assume for now that the cell is valid
     /// check cell neighbor validity
+    
 
     bool neighbor_validity = check neighbor validity
 
-    return box_validity & neighbor_validity;  //if all 9 bits of the right hand side are 1, meaning 2^0 + 2^1 +...+ 2^8 which is 511
+    return box_validity & neighbor_validity
 }
 
 int* backtrack(int **board){
@@ -112,7 +113,7 @@ int main(int argc, char *argv[]){
         if(strlen(argv[2]) == NUM_CELLS){
             populate(&board, argv[2]);
         }else{
-            printf("\nERROR!! the number of inputs for the board is not 81\n");
+            printf("\nERROR!! not exactly 81 inputs!\n");
         }
     }
 
