@@ -22,13 +22,15 @@
 bool constraint_propagation(Board **board){
     bool singles = false;
 
-    #pragma omp parallel for
+    #pragma omp for
     for(int i = 0; i < N; i++){       // looping for the number of rows, columns, and boxes.
-
         uint16_t row_mask = scan_row(board, i);                                 // get the available candidates of each row.
         uint16_t col_mask = scan_col(board, i);
         uint16_t box_mask = scan_box(board, i);
+    }
 
+    #pragma omp for
+    for(int i = 0; i < N; i++){
         for(int j = 0; j < N; j++){                                             // looping for the number of values in a row.
             int index = j + i * N;
             Cell *cell = &(*board)->cells[index];
