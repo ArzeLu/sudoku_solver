@@ -17,11 +17,9 @@
 /// Readjust the number of remaining possible candidates for all cells.
 /// Assign the cell with a value if there's only one remaining.
 /// The process is split into three for-loops internally to avoid race condition
-/// Returns if there is a cell with just a single candidate remaining.
+/// Returns true if the function filled a cell with a single remainder candidate.
 /// DONE
 bool constraint_propagation(Board **board){
-    bool singles = false;
-
     uint16_t row_mask[N];                                 // get the available candidates of each row.
     uint16_t col_mask[N];
     uint16_t box_mask[N];
@@ -35,20 +33,21 @@ bool constraint_propagation(Board **board){
     
     #pragma omp for
     for(int i = 0; i < NUM_CELLS; i++){
-        int position = i / 9;                 // the current row, column, or box
+        int row = i % 9;
+        int column = i / 9;
 
         Cell *cell = &(*board)->cells[i];
         if(cell->remainder == 0) continue;
-        cell->candidates |= row_mask[position];                      // update the candidates
+        cell->candidates |= row_mask[row];                      // update the candidates
         cell->remainder = pop_count(cell->candidates); // update the remaining count
 
-        Cell *cell = &(*board)->cells[i % 9 + position];    
+        Cell *cell = &(*board)->cells[i];    
         if(cell->remainder == 0) continue;
-        cell->candidates |= col_mask[position];
+        cell->candidates |= col_mask[column];
         cell->remainder = pop_count(cell->candidates);
 
-        int box_row = (i / n) * n;                                              // row position of the top left of the box
-        int box_column = (i % n) * n;                                           // column position of the top left of the box
+        int box_row = i % n;                                              // row position of the top left of the box
+        int box_column = i / n;                                           // column position of the top left of the box
         
         for(int j = 0; j < n; j++){
             for(int k = 0; k < n; k++){
@@ -57,14 +56,13 @@ bool constraint_propagation(Board **board){
                 int index = box_x * N + box_y;   
                 Cell *cell = &(*board)->cells[index];        
                 if(cell->remainder == 0) continue;
-                cell->candidates |= box_mask;
+                cell->candidates |= box_mask[position];
                 cell->remainder = pop_count(cell->candidates);
-                if(cell->remainder == 1) singles = true;
             }
         }
-    }  
+    }
     
-    return singles;
+    return fill_singles(board);
 }
 
 /// Checks all candidates to see if they produce a dead end.
@@ -98,9 +96,7 @@ int* backtrack(int **board){
 }
 
 void solve(Board **board){
-    while(constraint_propagation(board)){
-        fill_singles(board);
-    }
+    while(constraint_propagation(board)); // Repeat CSP if a cell was filled. Refer to CSP function comments.
     backtrack() //not yet implemented
 }
 

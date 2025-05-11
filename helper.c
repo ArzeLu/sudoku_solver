@@ -134,8 +134,11 @@ int bit_position(uint16_t mask){
 }
 
 /// Fill any block in the board that has just one remaining candidate
+/// Return true if a value was filled
 /// DONE
-void fill_singles(Board **board){
+bool fill_singles(Board **board){
+    bool filled = false;
+
     #pragma omp parallel for
     for(int i = 0; i < NUM_CELLS; i++){
         Cell *cell = &(*board)->cells[i];
@@ -143,6 +146,9 @@ void fill_singles(Board **board){
             cell->value = bit_position(cell->candidates);
             cell->remainder = 0;
             cell->candidates = 0;
+            filled = true;
         }
     }
+    
+    return filled;
 }
