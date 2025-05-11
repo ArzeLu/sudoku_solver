@@ -3,11 +3,11 @@
 #define N 9
 
 typedef struct{
-    int value;
-    uint16_t candidates;
-    int remaining;
+    uint8_t value;       // 0-9
+    uint8_t remaining;   // 0-9
+    uint16_t candidates; // bitmask for valid candidates. 1 for valid
 } Cell;
 
 typedef struct{
-    Cell grid[N][N];
+    Cell cells[N * N];
 } Board;
