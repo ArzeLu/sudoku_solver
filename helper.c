@@ -1,0 +1,148 @@
+/// ALL DONE FOR NOW
+
+#include <libs.h>
+#include <board.h>
+
+#define n 3
+#define N 9
+#define NUM_CELLS 81
+
+/// populate the board with the given inputs.
+/// not random
+/// DONE
+void populate(Board *board, char input[]){
+    for(int i = 0; i < N * N; i++){
+            int value = input[i] - '0';
+            board->cells[i].value = value;
+
+            if(value > 0){
+                board->cells[i].candidates = 0;
+                board->cells[i].remainder = 0;
+            }else{
+                board->cells[i].candidates = 0x1FF;
+                board->cells[i].remainder = 9;
+            }
+            board->cells[i].attempted = 0;
+    }
+}
+
+/// Return the bitmask of available candidates of the row
+/// DONE
+uint16_t scan_row(Board **board, int position){
+    uint16_t mask = 0;
+    int start = position * N;
+    int end = start + N;
+    for(int i = start; i < end; i++){
+        int value = (*board)->cells[i].value;
+        if(value == 0) continue;
+        mask |= (1 << value);
+    }
+    return mask;
+}
+
+/// Return the bitmask of available candidates of the column
+/// DONE
+uint16_t scan_col(Board **board, int position){
+    uint16_t mask = 0;
+    for(int i = 0; i < N; i++){
+        int value = (*board)->cells[i * N + position].value;
+        if(value == 0) continue;
+        mask |= (1 << value);
+    }
+    return mask;
+}
+
+/// Return the bitmask of available candidates of the block
+/// The box traversal goes right then down
+/// DONE
+uint16_t scan_box(Board **board, int position){
+    uint16_t mask = 0;
+    int box_row = (position / n) * n;
+    int box_column = (position % n) * n;
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < n; j++){
+            int box_x = box_row + i;
+            int box_y = box_column + j;
+            int index = box_x * N + box_y;
+            int value = (*board)->cells[index].value;
+            if(value == 0) continue;
+            mask |= (1 << value);
+        }
+    }
+
+    return mask;
+}
+
+/// find a cell that has the lowest number of remaining candidates
+///   to prevent needing to guess a lot.
+/// DONE
+int find_mrv_cell(Board **board){
+    uint8_t smallest = (*board)->cells[0].value;
+    int index = 0;
+    for(int i = 1; i < NUM_CELLS; i++){
+        uint8_t remainder = (*board)->cells[i].remainder;
+        if(remainder == 0) continue;
+        if(remainder < smallest){
+            smallest = remainder;
+            index = i;
+        }
+    }
+
+    return index;
+}
+
+/// Brian Kernighan's trick
+/// find the total number of 1's in a binary number
+/// DONE
+int pop_count(uint16_t mask){
+    int count = 0;
+    while(mask){
+        mask &= (mask - 1);
+        count++;
+    }
+    return count;
+}
+
+/// find positions of all flipped bits.
+/// DONE
+int* all_bits_positions(uint16_t mask, int **list){
+    int position = 1;
+    int count = 0;
+    while(mask){
+        if(mask & 1){
+            *(*list + count) = position;
+            count++;
+        }
+        mask >>= 1;
+        position++;
+    }
+}
+
+/// find what position the flipped bit is in.
+/// only in the case of when only one bit is 1 in the mask,
+/// or if you want to find the smallest position.
+/// DONE
+int bit_position(uint16_t mask){
+    int value = 0;
+    while(mask >>= 1){
+        if(mask & 1){      // break when a bit is found
+            break;
+        }
+        value++;
+    }
+    return value;
+}
+
+/// Fill any block in the board that has just one remaining candidate
+/// DONE
+void fill_singles(Board **board){
+    #pragma omp parallel for
+    for(int i = 0; i < NUM_CELLS; i++){
+        Cell *cell = &(*board)->cells[i];
+        if(cell->remainder == 1){
+            cell->value = bit_position(cell->candidates);
+            cell->remainder = 0;
+            cell->candidates = 0;
+        }
+    }
+}
