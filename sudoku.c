@@ -49,15 +49,21 @@ bool constraint_propagation(Board *board){
 
 /// Checks all candidates to see if they produce a dead end.
 /// Return a working value, return a zero if nothing works.
-bool forward_check(Board *board, int index){
+bool forward_check(Board *board){
     int index = find_mrv_cell(board);               // Return the index of the cell with least number of remainders.
     Cell *cell = &board->cells[index];
-
-    int candidate = bit_position(cell->candidates); // Get the value of one candidate from the bitmask.
     record_cell(board, index);
-    update_cell(board, index, candidate);           // Update the cell with the next candidate value.
 
-    return scan_neighbor(board, index);
+    uint16_t candidates = cell->candidates;
+
+    while(candidates){                               // While candidates is not zero,
+        int candidate = bit_position(candidates);    // Get the value of one candidate from the bitmask.
+        candidates ^= (1 << candidate);              // Clear the target candidate out of the pool of candidates.
+        update_cell(board, index, candidate);        // Update the cell with the next candidate value.
+        if(scan_neighbor(board, index)) return true; // Return true when a candidate is valid.
+    }
+    
+    return false;
 }
 
 int* backtrack(Board *board){

@@ -18,7 +18,7 @@ void populate(Board *board, char input[]){
                 board->cells[i].remainder = 9;
             }
             board->cells[i].attempted = 0;
-            board->tail = NULL;
+            board->record = NULL;
     }
 }
 
@@ -200,4 +200,31 @@ void update_cell(Board *board, int index, int value){
     cell->candidates ^= (1 << value);
     cell->remainder -= 1;
     cell->attempted |= (1 << value);
+}
+
+/// @brief Given the board and the index, make a record
+///        of the cell and add it to the linked list in the board.
+/// @param board 
+/// @param index 
+void push_record(Board *board, int index){
+    Cell *cell = &board->cells[index];
+    Record *new = malloc(sizeof(Record));
+    if(!new) printf("error 1 in push_record");
+    
+    new->index = index;
+    new->value = cell->value;
+    new->attempted = cell->attempted;
+    new->candidates = cell->candidates;
+    new->remainder = cell->remainder;
+
+    if(board->record == NULL){
+        board->record = new;
+        board->record->prev = NULL;
+        board->record->next = NULL;
+    }else{
+        board->record->next = new;
+        new->prev = board->record;
+        new->next = NULL;
+        board->record = new;
+    }
 }
