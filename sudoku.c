@@ -1,3 +1,4 @@
+/// Arze Lu
 /// Patent number: 69420
 /// blazinweed.org, all rights reserved
 /// sponsored by Vaperjit
@@ -95,7 +96,6 @@ void solve(Board *board){
 
     #pragma omp parallel
     {
-        int index = find_mrv_cell(board);  // fewest candidates
         int threads = omp_get_num_threads();
         int id = omp_get_thread_num();
         int portion = floor(NUM_CELLS / threads);
