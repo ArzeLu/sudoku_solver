@@ -3,10 +3,6 @@
 #include <libs.h>
 #include <board.h>
 
-#define n 3
-#define N 9
-#define NUM_CELLS 81
-
 /// populate the board with the given inputs.
 /// not random
 /// DONE
@@ -26,14 +22,26 @@ void populate(Board *board, char input[]){
     }
 }
 
+/// usage: deepy copy board for threads
+/// DONE
+void copy_board(Board *original, Board *copy){
+    #pragma omp parallel for schedule(static)
+    for(int i = 0; i < NUM_CELLS; i++){
+        copy->cells[i].attempted = original->cells[i].attempted;
+        copy->cells[i].candidates = original->cells[i].candidates;
+        copy->cells[i].remainder = original->cells[i].remainder;
+        copy->cells[i].value = original->cells[i].value;
+    }
+}
+
 /// Return the bitmask of available candidates of the row
 /// DONE
-uint16_t scan_row(Board **board, int position){
+uint16_t scan_row(Board *board, int position){
     uint16_t mask = 0;
     int start = position * N;
     int end = start + N;
     for(int i = start; i < end; i++){
-        int value = (*board)->cells[i].value;
+        int value = board->cells[i].value;
         if(value == 0) continue;
         mask |= (1 << value);
     }
@@ -42,10 +50,10 @@ uint16_t scan_row(Board **board, int position){
 
 /// Return the bitmask of available candidates of the column
 /// DONE
-uint16_t scan_col(Board **board, int position){
+uint16_t scan_col(Board *board, int position){
     uint16_t mask = 0;
     for(int i = 0; i < N; i++){
-        int value = (*board)->cells[i * N + position].value;
+        int value = board->cells[i * N + position].value;
         if(value == 0) continue;
         mask |= (1 << value);
     }
@@ -55,7 +63,7 @@ uint16_t scan_col(Board **board, int position){
 /// Return the bitmask of available candidates of the block
 /// The box traversal goes right then down
 /// DONE
-uint16_t scan_box(Board **board, int position){
+uint16_t scan_box(Board *board, int position){
     uint16_t mask = 0;
     int box_row = (position / n) * n;
     int box_column = (position % n) * n;
@@ -64,7 +72,7 @@ uint16_t scan_box(Board **board, int position){
             int box_x = box_row + i;
             int box_y = box_column + j;
             int index = box_x * N + box_y;
-            int value = (*board)->cells[index].value;
+            int value = board->cells[index].value;
             if(value == 0) continue;
             mask |= (1 << value);
         }
@@ -76,11 +84,11 @@ uint16_t scan_box(Board **board, int position){
 /// find a cell that has the lowest number of remaining candidates
 ///   to prevent needing to guess a lot.
 /// DONE
-int find_mrv_cell(Board **board){
-    uint8_t smallest = (*board)->cells[0].value;
+int find_mrv_cell(Board *board){
+    uint8_t smallest = board->cells[0].value;
     int index = 0;
     for(int i = 1; i < NUM_CELLS; i++){
-        uint8_t remainder = (*board)->cells[i].remainder;
+        uint8_t remainder = board->cells[i].remainder;
         if(remainder == 0) continue;
         if(remainder < smallest){
             smallest = remainder;
@@ -136,12 +144,12 @@ int bit_position(uint16_t mask){
 /// Fill any block in the board that has just one remaining candidate
 /// Return true if a value was filled
 /// DONE
-bool fill_singles(Board **board){
+bool fill_singles(Board *board){
     bool filled = false;
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static) reduction(|:filled)   // prevent race condition of writing to the same boolean
     for(int i = 0; i < NUM_CELLS; i++){
-        Cell *cell = &(*board)->cells[i];
+        Cell *cell = &board->cells[i];
         if(cell->remainder == 1){
             cell->value = bit_position(cell->candidates);
             cell->remainder = 0;
