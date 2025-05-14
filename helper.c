@@ -15,17 +15,16 @@ void populate(Board *board, char input[]){
                 board->cells[i].candidates = 0x1FF;
                 board->cells[i].remainder = 9;
             }
-            board->cells[i].attempted = 0;
     }
     board->record = NULL;
 }
 
 /// Fill any block in the board that has just one remaining candidate
 /// Return true if a value was filled
-bool fill_singles(Board *board){
+bool fill_all_singles(Board *board){
     bool filled = false;
 
-    #pragma omp parallel for schedule(static) reduction(|:filled)   // prevent race condition of writing to the same boolean
+    #pragma omp parallel for schedule(static) reduction(|:filled) if(!use_parallel) // prevent race condition of writing to the same boolean
     for(int i = 0; i < NUM_CELLS; i++){
         Cell *cell = &board->cells[i];
         if(cell->remainder == 1){
@@ -39,11 +38,19 @@ bool fill_singles(Board *board){
     return filled;
 }
 
+/// @brief Given the index, fill a single-candidate cell.
+/// @param board 
+/// @param index 
+/// @return 
+bool fill_single(Board *board, int index){
+    Record *new = malloc(sizeof(Record));
+    new->
+}
+
 /// Deep copy board
 void copy_board(Board *original, Board *copy){
     #pragma omp for schedule(static)
     for(int i = 0; i < NUM_CELLS; i++){
-        copy->cells[i].attempted = original->cells[i].attempted;
         copy->cells[i].candidates = original->cells[i].candidates;
         copy->cells[i].remainder = original->cells[i].remainder;
         copy->cells[i].value = original->cells[i].value;
@@ -192,7 +199,6 @@ void update_cell(Board *board, int index, int value){
     cell->value = value;
     cell->candidates ^= (1 << value);
     cell->remainder -= 1;
-    cell->attempted |= (1 << value);
 }
 
 /// @brief Given the board and the index, make a record
@@ -206,7 +212,6 @@ void push_record(Board *board, int index){
     
     new->index = index;
     new->value = cell->value;
-    new->attempted = cell->attempted;
     new->candidates = cell->candidates;
     new->remainder = cell->remainder;
 

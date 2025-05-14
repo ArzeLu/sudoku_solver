@@ -5,25 +5,27 @@
 /// try our flagship cannabis sample today (value at $60)!
 /// interested? visit blazinweed.org/canny/item/highflyer/free-trial
 
-/// parallelize the top level
-/// avoid dividing tasks too deep
+/// strategy:
+/// loop through the cells as a 1D 1 by 81 structure.
+/// parallelize the top level.
+/// only record the original state of the cell when it's first explored by a branch.
 
-//TODO: consider dynamic padding
-#include <libs.h>
-#include <board.h>
+///TODO: consider dynamic padding
+///TODO: see if i can get rid of "check_complete" for a faster solution
+
 #include <helper.c>
 
 /// Readjust the number of remaining possible candidates for all cells.
 /// Assign the cell with a value if there's only one remaining.
-/// Returns true if the function filled a cell with a single remainder candidate.
+/// At the end, keeps filling the single-candidate cells and stop if none found.
 /// DONE
 bool constraint_propagation(Board *board){
-    uint16_t row_mask[N];
-    uint16_t col_mask[N];
-    uint16_t box_mask[N];
-
-    #pragma omp parallel
+    #pragma omp parallel if(!use_parallel)
     {
+        uint16_t row_mask[N];
+        uint16_t col_mask[N];
+        uint16_t box_mask[N];
+
         #pragma omp for schedule(static)       // prevent openmp from choosing interleaving distribution. 
         for(int i = 0; i < N; i++){            // no "parallel" key word here because it's already in one
             row_mask[i] = scan_row(board, i);  // get the available candidates of each row.
@@ -44,13 +46,12 @@ bool constraint_propagation(Board *board){
         }
     }
     
-    return fill_singles(board); // fill up any single-candidate cells. True if filled, false if no singles.
+    return fill_all_singles(board);
 }
 
 /// Checks all candidates to see if they produce a dead end.
 /// Return a working value, return a zero if nothing works.
-bool forward_check(Board *board){
-    int index = find_mrv_cell(board);                // Return the index of the cell with least number of remainders.
+bool forward_check(Board *board, int index){
     Cell *cell = &board->cells[index];
     record_cell(board, index);
 
@@ -66,42 +67,56 @@ bool forward_check(Board *board){
     return false;
 }
 
-bool backtrack(Board *board){
-    int index = find_mrv_cell(board);  // fewest candidates
-    int threads = omp_get_num_threads();
-    int id = omp_get_thread_num();
-    int portion = floor(NUM_CELLS / threads);
-    int start;
-    int end;
-
-    if(id + 1 == threads){
-        start = NUM_CELLS - (id - 1) * portion;
-        end = NUM_CELLS - 1;
-    }else{
-        start = id * portion;
-        end = start + portion;
-    }
-
-    for(int i = start; i < end; i++){
-        if(check_complete(board)) return true;
-
-        if forward_check(board, cell, digit):
-            if backtrack(board):
-                return true
-
-        undo(cell, digit) 
-    }
+bool backtrack(Board *board, bool *visited){
+    if(check_complete(board))
+        return true;
         
-    return false
+    int index = find_mrv_cell(board); // Return the index of the cell with least number of remainders.
+
+    if(!visited[index])
+        push_record(board, index);
+
+    if(board->cells[index].remainder == 0){
+        
+    }else{
+
+    }
+
+    bool validity = forward_check(board, index);
+
+    if(!validity)
+        undo(board);
+
+    return backtrack(board, visited);
 }
 
 void solve(Board *board){
     while(constraint_propagation(board)); // Repeat CSP if a cell was filled. Refer to CSP function comments.
+
     #pragma omp parallel
     {
+        int index = find_mrv_cell(board);  // fewest candidates
+        int threads = omp_get_num_threads();
+        int id = omp_get_thread_num();
+        int portion = floor(NUM_CELLS / threads);
+        int start;
+        int end;
+
+        if(id + 1 == threads){
+            start = NUM_CELLS - (id - 1) * portion;
+            end = NUM_CELLS - 1;
+        }else{
+            start = id * portion;
+            end = start + portion;
+        }
+
         Board copy;
         copy_board(board, &copy);
-        backtrack(&copy);
+
+        for(int i = start; i < end; i++){
+            bool visited[NUM_CELLS] = {false};
+            backtrack(&copy, &visited);
+        }
     }
 }
 
