@@ -50,7 +50,7 @@ bool constraint_propagation(Board *board){
 /// Checks all candidates to see if they produce a dead end.
 /// Return a working value, return a zero if nothing works.
 bool forward_check(Board *board){
-    int index = find_mrv_cell(board);               // Return the index of the cell with least number of remainders.
+    int index = find_mrv_cell(board);                // Return the index of the cell with least number of remainders.
     Cell *cell = &board->cells[index];
     record_cell(board, index);
 
@@ -66,19 +66,32 @@ bool forward_check(Board *board){
     return false;
 }
 
-int* backtrack(Board *board){
+bool backtrack(Board *board){
     int index = find_mrv_cell(board);  // fewest candidates
+    int threads = omp_get_num_threads();
+    int id = omp_get_thread_num();
+    int portion = floor(NUM_CELLS / threads);
+    int start;
+    int end;
 
-    for digit in get_candidates(cell):
-        if board is complete:
-            return true
+    if(id + 1 == threads){
+        start = NUM_CELLS - (id - 1) * portion;
+        end = NUM_CELLS - 1;
+    }else{
+        start = id * portion;
+        end = start + portion;
+    }
+
+    for(int i = start; i < end; i++){
+        if(check_complete(board)) return true;
 
         if forward_check(board, cell, digit):
             if backtrack(board):
                 return true
 
         undo(cell, digit) 
-
+    }
+        
     return false
 }
 
@@ -88,7 +101,7 @@ void solve(Board *board){
     {
         Board copy;
         copy_board(board, &copy);
-        backtrack(copy);
+        backtrack(&copy);
     }
 }
 

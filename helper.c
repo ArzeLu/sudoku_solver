@@ -1,5 +1,3 @@
-///TODO: just add more comments
-
 #include <libs.h>
 #include <board.h>
 
@@ -18,8 +16,8 @@ void populate(Board *board, char input[]){
                 board->cells[i].remainder = 9;
             }
             board->cells[i].attempted = 0;
-            board->record = NULL;
     }
+    board->record = NULL;
 }
 
 /// Fill any block in the board that has just one remaining candidate
@@ -130,9 +128,19 @@ bool scan_neighbor(Board *board, int index){
     return true;
 }
 
+/// @brief See if the board is solved
+/// @param board 
+/// @return 
+bool check_complete(Board *board){
+    for(int i = 0; i < NUM_CELLS; i++){
+        if(board->cells[i].value == 0) return false;
+    }
+    return true;
+}
+
 /// find a cell with the least remainder.
 int find_mrv_cell(Board *board){
-    uint8_t smallest = board->cells[0].value;
+    uint8_t smallest = board->cells[0].remainder;
     int index = 0;
     for(int i = 1; i < NUM_CELLS; i++){
         uint8_t remainder = board->cells[i].remainder;
@@ -157,29 +165,14 @@ int pop_count(uint16_t mask){
     return count;
 }
 
-/// find positions of all flipped bits.
-int* all_bits_positions(uint16_t mask, int **list){
-    int position = 1;
-    int count = 0;
-    while(mask){
-        if(mask & 1){
-            *(*list + count) = position;
-            count++;
-        }
-        mask >>= 1;
-        position++;
-    }
-}
-
 /// find what position the flipped bit is in.
 /// only in the case of when only one bit is 1 in the mask,
 /// or if you want to find the smallest position.
 int bit_position(uint16_t mask){
-    int value = 0;
-    while(mask >>= 1){
-        if(mask & 1){      // break when a bit is found
-            break;
-        }
+    int value = 1;
+    if(mask == 0) printf("error 1 in bit_position");
+    while(!(mask & 1)){
+        mask >>= 1;
         value++;
     }
     return value;
