@@ -33,13 +33,13 @@ bool constraint_propagation(Board *board){
         
         #pragma omp for schedule(static)
         for(int i = 0; i < NUM_CELLS; i++){
-            int row = i / N;
-            int column = i % N;
-            int box_index = (row / n) * n + (column / n);
+            int row = i / N;                     // position of the row given cell index
+            int col = i % N;                     // position of the col given cell index
+            int box = (row / n) * n + (col / n); // position of the box given cell index
 
             Cell *cell = &board->cells[i];
             if(cell->remainder == 0) continue;
-            cell->candidates = row_mask[row] & col_mask[column] & box_mask[box_index]; // update the candidates
+            cell->candidates = row_mask[row] & col_mask[col] & box_mask[box]; // update the candidates
             cell->remainder = pop_count(cell->candidates); // update the remaining count
         }
     }
@@ -49,21 +49,18 @@ bool constraint_propagation(Board *board){
 
 /// Checks all candidates to see if they produce a dead end.
 /// Return a working value, return a zero if nothing works.
-    /// assume for now that the cell is valid
-    /// check cell neighbor validity
 bool forward_check(Board *board, int index){
-    int index = find_mrv_cell(board);
+    int index = find_mrv_cell(board);               // Return the index of the cell with least number of remainders.
     Cell *cell = &board->cells[index];
 
-    int candidate = bit_position(cell->candidates);
+    int candidate = bit_position(cell->candidates); // Get the value of one candidate from the bitmask.
+    record_cell(board, index);
+    update_cell(board, index, candidate);           // Update the cell with the next candidate value.
 
-
-    bool neighbor_validity = check neighbor validity
-
-    return box_validity & neighbor_validity
+    return scan_neighbor(board, index);
 }
 
-int* backtrack(int *board){
+int* backtrack(Board *board){
     int index = find_mrv_cell(board);  // fewest candidates
 
     for digit in get_candidates(cell):
@@ -81,7 +78,12 @@ int* backtrack(int *board){
 
 void solve(Board *board){
     while(constraint_propagation(board)); // Repeat CSP if a cell was filled. Refer to CSP function comments.
-    backtrack() //not yet implemented
+    #pragma omp parallel
+    {
+        Board copy;
+        copy_board(board, &copy);
+        backtrack(copy);
+    }
 }
 
 int main(int argc, char *argv[]){
