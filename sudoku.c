@@ -1,4 +1,5 @@
 /// Arze Lu
+/// https://github.com/ArzeLu/sudoku_solver/
 /// Patent number: 69420
 /// blazinweed.org, all rights reserved
 /// sponsored by Vaperjit
@@ -13,6 +14,7 @@
 
 ///TODO: consider dynamic padding
 ///TODO: see if i can get rid of "check_complete" for a faster solution
+///TODO: hardcode the fucking traversals. it's fixed sized board anyway.
 
 #include <helper.c>
 
@@ -77,16 +79,14 @@ bool backtrack(Board *board, bool *visited){
     if(!visited[index])
         push_record(board, index);
 
-    if(board->cells[index].remainder == 0){
-        
-    }else{
-
+    if(board->cells[index].remainder == 1){
+        fill_single(board, index);
+        update_neighbors(board, index);
+        return backtrack(board, visited);
     }
 
-    bool validity = forward_check(board, index);
-
-    if(!validity)
-        undo(board);
+    if(!forward_check(board, index))
+        undo(board, index);
 
     return backtrack(board, visited);
 }
