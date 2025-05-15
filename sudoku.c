@@ -88,9 +88,11 @@ bool backtrack(Board *board){
     while(candidates){
         int value = bit_position(candidates);
         update_cell(board, index, value);
+
         if(forward_check(board, index, value))
             if(backtrack(board))
                 return true;
+                
         restore_neighbors(board, index, value);
         candidates ^= (1 << value);
     }
