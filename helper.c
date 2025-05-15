@@ -1,6 +1,13 @@
 #include <libs.h>
 #include <board.h>
 
+static const int row[NUM_CELLS] = ROW_POSITION;
+static const int col[NUM_CELLS] = COL_POSITION;
+static const int box[NUM_CELLS] = BOX_POSITION;
+static const int row_cell[N][N] = ROW_TRAVERSAL;
+static const int col_cell[N][N] = COL_TRAVERSAL;
+static const int box_cell[N][N] = BOX_TRAVERSAL;
+
 /// Populate the board with the given inputs.
 /// Not random.
 void populate(Board *board, char input[]){
@@ -42,7 +49,7 @@ bool fill_all_singles(Board *board){
 /// @param board 
 /// @param index 
 /// @return 
-bool fill_single(Board *board, int index){
+void fill_single(Board *board, int index){
     Cell *cell = &board->cells[index];
 
     if(cell->remainder != 1){
@@ -120,23 +127,19 @@ bool scan_neighbor(Board *board, int index){
     int value = board->cells[index].value;
     uint16_t mask = (1 << value);
 
-    int row = index / N;
-    int col = index % N;
-    int box = (row / n) * n + (col / n);
-
     for(int i = 0; i < N; i++){
-        int rn_cell = row * N + i;                 // row_neighbor_cell
-        int cn_cell = col + i * N;                 // col_neighbor_cell
-        int bn_cell = box + (i / n * N) + (i % n); // box_neighbor_cell
+        int row_neighbor_index = row_cell[row[index]][i];
+        int col_neighbor_index = col_cell[col[index]][i];
+        int box_neighbor_index = box_cell[box[index]][i];
 
-        if((rn_cell != index) && (board->cells[rn_cell].value == 0)){
-            if((board->cells[rn_cell].candidates & mask) && (board->cells[rn_cell].remainder == 1)) return false;
+        if((row_neighbor_index != index) && (board->cells[row_neighbor_index].value == 0)){
+            if((board->cells[row_neighbor_index].candidates & mask) && (board->cells[row_neighbor_index].remainder == 1)) return false;
         }
-        if((cn_cell != index) && (board->cells[cn_cell].value == 0)){
-            if((board->cells[cn_cell].candidates & mask) && (board->cells[cn_cell].remainder == 1)) return false;
+        if((col_neighbor_index != index) && (board->cells[col_neighbor_index].value == 0)){
+            if((board->cells[col_neighbor_index].candidates & mask) && (board->cells[col_neighbor_index].remainder == 1)) return false;
         }
-        if((bn_cell != index) && (board->cells[bn_cell].value == 0)){
-            if((board->cells[bn_cell].candidates & mask) && (board->cells[bn_cell].remainder == 1)) return false;
+        if((box_neighbor_index != index) && (board->cells[box_neighbor_index].value == 0)){
+            if((board->cells[box_neighbor_index].candidates & mask) && (board->cells[box_neighbor_index].remainder == 1)) return false;
         }
     }
 
@@ -213,29 +216,25 @@ void update_neighbor(Board *board, int index){
     bool visited[NUM_CELLS] = {false};
     visited[index] = true;
 
-    int row = index / N;
-    int col = index % N;
-    int box = (row / n) * n + (col / n);
-
     for(int i = 0; i < N; i++){
-        int rn_cell = row * N + i;                 // row_neighbor_cell
-        int cn_cell = col + i * N;                 // col_neighbor_cell
-        int bn_cell = box + (i / n * N) + (i % n); // box_neighbor_cell
+        int row_neighbor_index = row_cell[row[index]][i];
+        int col_neighbor_index = col_cell[col[index]][i];
+        int box_neighbor_index = box_cell[box[index]][i];
 
-        if(!visited[rn_cell]){
-            board->cells[rn_cell].candidates &= ~(1 << value);
-            board->cells[rn_cell].remainder -= 1;
-            visited[rn_cell] = true;
+        if(!visited[row_neighbor_index]){
+            board->cells[row_neighbor_index].candidates &= ~(1 << value);
+            board->cells[row_neighbor_index].remainder -= 1;
+            visited[row_neighbor_index] = true;
         }
-        if(!visited[cn_cell]){
-            board->cells[cn_cell].candidates &= ~(1 << value);
-            board->cells[cn_cell].remainder -= 1;
-            visited[cn_cell] = true;
+        if(!visited[col_neighbor_index]){
+            board->cells[col_neighbor_index].candidates &= ~(1 << value);
+            board->cells[col_neighbor_index].remainder -= 1;
+            visited[col_neighbor_index] = true;
         }
-        if(!visited[bn_cell]){
-            board->cells[bn_cell].candidates &= ~(1 << value);        
-            board->cells[bn_cell].remainder -= 1;
-            visited[bn_cell] = true;
+        if(!visited[box_neighbor_index]){
+            board->cells[box_neighbor_index].candidates &= ~(1 << value);        
+            board->cells[box_neighbor_index].remainder -= 1;
+            visited[box_neighbor_index] = true;
         }
     }
 }

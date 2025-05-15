@@ -18,6 +18,13 @@
 
 #include <helper.c>
 
+static const int row[NUM_CELLS] = ROW_POSITION;
+static const int col[NUM_CELLS] = COL_POSITION;
+static const int box[NUM_CELLS] = BOX_POSITION;
+static const int row_cell[N][N] = ROW_TRAVERSAL;
+static const int col_cell[N][N] = COL_TRAVERSAL;
+static const int box_cell[N][N] = BOX_TRAVERSAL;
+
 /// Readjust the number of remaining possible candidates for all cells.
 /// Assign the cell with a value if there's only one remaining.
 /// At the end, keeps filling the single-candidate cells and stop if none found.
@@ -38,13 +45,9 @@ bool constraint_propagation(Board *board){
         
         #pragma omp for schedule(static)
         for(int i = 0; i < NUM_CELLS; i++){
-            int row = i / N;                     // position of the row given cell index
-            int col = i % N;                     // position of the col given cell index
-            int box = (row / n) * n + (col / n); // position of the box given cell index
-
             Cell *cell = &board->cells[i];
             if(cell->remainder == 0) continue;
-            cell->candidates = row_mask[row] & col_mask[col] & box_mask[box]; // update the candidates
+            cell->candidates = row_mask[row[i]] & col_mask[col[i]] & box_mask[box[i]]; // update the candidates
             cell->remainder = pop_count(cell->candidates); // update the remaining count
         }
     }
