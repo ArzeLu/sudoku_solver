@@ -1,5 +1,5 @@
-#include <libs.h>
-#include <board.h>
+#include "libs.h"
+#include "board.h"
 
 static const int row[NUM_CELLS] = ROW_POSITION;
 static const int col[NUM_CELLS] = COL_POSITION;
@@ -32,28 +32,6 @@ void push_record(Board *board, int index){
         new->next = NULL;
         board->record = new;
     }
-}
-
-void undo(Board *board, Record *record){
-    if(record == NULL) return;
-
-    undo(board, record->next);
-
-    int index = record->index;
-    Cell *cell = &board->cells[index];
-    uint16_t changes = cell->candidates ^ record->candidates;
-
-    restore_neighbor(board, index, changes);
-
-    cell->candidates = record->candidates;
-    cell->value = record->value;
-    cell->remainder = record->remainder;
-    record->next = NULL;
-    record->prev = NULL;
-
-    free(record);
-
-    return;
 }
 
 void update_neighbor(Board *board, int index, int value, bool *visited){
@@ -96,21 +74,42 @@ void restore_neighbor(Board *board, int index, int value, bool *visited){
     }
 }
 
-void restore_neighbors(Board *board, int index, uint16_t changes){    
-    while(changes){
-        bool visited[NUM_CELLS] = {false};
-        visited[index] = true;
-        int value = bit_position(changes);
+void restore_neighbors(Board *board, int index, int value){    
+    bool visited[NUM_CELLS] = {false};
+    visited[index] = true;
+    
+    for(int i = 0; i < N; i++){
+        int row_neighbor_index = row_cell[row[index]][i];
+        int col_neighbor_index = col_cell[col[index]][i];
+        int box_neighbor_index = box_cell[box[index]][i];
 
-        for(int i = 0; i < N; i++){
-            int row_neighbor_index = row_cell[row[index]][i];
-            int col_neighbor_index = col_cell[col[index]][i];
-            int box_neighbor_index = box_cell[box[index]][i];
-
-            restore_neighbor(board, row_neighbor_index, value, &visited);
-            restore_neighbor(board, col_neighbor_index, value, &visited);
-            restore_neighbor(board, box_neighbor_index, value, &visited);
-        }
-        changes ^= (1 << value);
+        restore_neighbor(board, row_neighbor_index, value, &visited);
+        restore_neighbor(board, col_neighbor_index, value, &visited);
+        restore_neighbor(board, box_neighbor_index, value, &visited);
     }
+}
+
+void undo(Board *board, Record *record){
+    int index = record->index;
+    Cell *cell = &board->cells[index];
+    int value = board->cells[index].value;
+
+    restore_neighbors(board, index, value);
+
+    cell->candidates = record->candidates;
+    cell->value = record->value;
+    cell->remainder = record->remainder;
+}
+
+void free_record(Record *record){
+    if(record == NULL) return;
+
+    free_record(record->next);
+
+    record->next = NULL;
+    record->prev = NULL;
+
+    free(record);
+
+    return;
 }

@@ -1,6 +1,6 @@
-#include <libs.h>
-#include <board.h>
-#include <record_helper.c>
+#include "libs.h"
+#include "board.h"
+#include "record_helper.c"
 
 static const int row[NUM_CELLS] = ROW_POSITION;
 static const int col[NUM_CELLS] = COL_POSITION;
@@ -17,6 +17,18 @@ bool check_complete(Board *board){
         if(board->cells[i].value == 0) return false;
     }
     return true;
+}
+
+void print_board(Board *board){
+    int counter = 0;
+    for(int i = 0; i < NUM_CELLS; i++){
+        printf("%d  ", board->cells[i].value);
+        counter++;
+        if(counter == 9){
+            printf("\n");
+            counter = 0;
+        }
+    }
 }
 
 /// Populate the board with the given inputs.
@@ -95,7 +107,7 @@ void update_cell(Board *board, int index, int value){
         printf("error 1 in update_cell");
         exit(1);
     }
-    if(remainder <= 0){
+    if(cell->remainder <= 0){
         printf("error 2 in update_cell");
         exit(2);
     }
@@ -172,8 +184,7 @@ uint16_t scan_box(Board *board, int position){
 /// see if the cell creates a dead end in its neighboring region.
 /// (row, column, and box).
 /// Returns true if it's safe.
-bool scan_neighbor(Board *board, int index){
-    int value = board->cells[index].value;
+bool scan_neighbor(Board *board, int index, int value){
     uint16_t mask = (1 << value);
 
     for(int i = 0; i < N; i++){

@@ -17,7 +17,7 @@
 ///TODO: hardcode the fucking traversals. it's fixed sized board anyway.
 ///TODO: make helpers for restore and update
 
-#include <helper.c>
+#include "helper.c"
 
 static const int row[NUM_CELLS] = ROW_POSITION;
 static const int col[NUM_CELLS] = COL_POSITION;
@@ -25,6 +25,8 @@ static const int box[NUM_CELLS] = BOX_POSITION;
 static const int row_cell[N][N] = ROW_TRAVERSAL;
 static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
+
+atomic_int solved = 0;
 
 /// Readjust the number of remaining possible candidates for all cells.
 /// Assign the cell with a value if there's only one remaining.
@@ -56,32 +58,21 @@ bool constraint_propagation(Board *board){
     return fill_all_singles(board);
 }
 
-/// Checks all candidates to see if they produce a dead end.
-/// Return a working value, return a zero if nothing works.
-bool forward_check(Board *board, int index){
+/// Checks to see if a cell produce a dead end.
+bool forward_check(Board *board, int index, int value){
     Cell *cell = &board->cells[index];
-    record_cell(board, index);
 
-    uint16_t candidates = cell->candidates;
-
-    while(candidates){                               // While candidates is not zero,
-        int candidate = bit_position(candidates);    // Get the value of one candidate from the bitmask.
-        candidates ^= (1 << candidate);              // Clear the target candidate out of the pool of candidates.
-        update_cell(board, index, candidate);        // Update the cell with the next candidate value.
-        if(scan_neighbor(board, index)){
-            update_neighbors(board, index);
-            return true; // Return true when a candidate is valid.
-        }
-    }
-    
-    return false;
+    return scan_neighbor(board, index, value);
 }
 
 /// @brief Find a
 /// @param board 
 /// @param visited 
 /// @return 
-bool backtrack(Board *board, bool *visited){
+bool backtrack(Board *board){
+    if(atomic_load(&solved))
+        return false;
+
     if(check_complete(board))
         return true;
 
@@ -90,20 +81,22 @@ bool backtrack(Board *board, bool *visited){
     /// Find mrv index, explore all candidates with that index,
     /// then roll back the recursion once this cell index is used up.
     int index = find_mrv_cell(board); // Return the index of the cell with least number of remainders.
-    if(!visited[index])
-        push_record(board, index);
+    push_record(board, index);
 
-    while(forward_check(board, index)){
-        if(board->cells[index].remainder == 1){
-            fill_single(board, index);
-            update_neighbors(board, index);
-        }
-        if(backtrack(board, visited))
-            return true;
+    uint16_t candidates = board->cells[index].candidates;
+
+    while(candidates){
+        int value = bit_position(candidates);
+        update_cell(board, index, value);
+        if(forward_check(board, index, value))
+            if(backtrack(board))
+                return true;
+        restore_neighbors(board, index, value);
+        candidates ^= (1 << value);
     }
 
     undo(board, current);
-
+    free_record(current);
     return false;
 }
 
@@ -115,24 +108,23 @@ void solve(Board *board){
         int threads = omp_get_num_threads();
         int id = omp_get_thread_num();
         int portion = floor(NUM_CELLS / threads);
-        int start;
-        int end;
-
-        if(id + 1 == threads){
-            start = NUM_CELLS - (id - 1) * portion;
-            end = NUM_CELLS - 1;
-        }else{
-            start = id * portion;
-            end = start + portion;
-        }
+        int start = id * portion;
+        int end = (id + 1 == threads) ? NUM_CELLS : start + portion;
 
         Board copy;
         copy_board(board, &copy);
 
+        Record *current = copy.record;
+
         for(int i = start; i < end; i++){
-            bool visited[NUM_CELLS] = {false};
-            backtrack(&copy, &visited);
+            if(backtrack(&copy)){
+                atomic_store(&solved, 1);
+                print_board(&copy);
+            }
+            if(atomic_load(&solved))
+                break;
         }
+        free_record(current);
     }
 }
 
