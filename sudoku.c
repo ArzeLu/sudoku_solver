@@ -15,6 +15,7 @@
 ///TODO: consider dynamic padding
 ///TODO: see if i can get rid of "check_complete" for a faster solution
 ///TODO: hardcode the fucking traversals. it's fixed sized board anyway.
+///TODO: make helpers for restore and update
 
 #include <helper.c>
 
