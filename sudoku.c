@@ -64,31 +64,43 @@ bool forward_check(Board *board, int index){
         int candidate = bit_position(candidates);    // Get the value of one candidate from the bitmask.
         candidates ^= (1 << candidate);              // Clear the target candidate out of the pool of candidates.
         update_cell(board, index, candidate);        // Update the cell with the next candidate value.
-        if(scan_neighbor(board, index)) return true; // Return true when a candidate is valid.
+        if(scan_neighbor(board, index)){
+            update_neighbors(board, index);
+            return true; // Return true when a candidate is valid.
+        }
     }
     
     return false;
 }
 
+/// @brief Find a
+/// @param board 
+/// @param visited 
+/// @return 
 bool backtrack(Board *board, bool *visited){
     if(check_complete(board))
         return true;
-        
-    int index = find_mrv_cell(board); // Return the index of the cell with least number of remainders.
 
+    Record *current = board->record;
+
+    /// Find mrv index, explore all candidates with that index,
+    /// then roll back the recursion once this cell index is used up.
+    int index = find_mrv_cell(board); // Return the index of the cell with least number of remainders.
     if(!visited[index])
         push_record(board, index);
 
-    if(board->cells[index].remainder == 1){
-        fill_single(board, index);
-        update_neighbors(board, index);
-        return backtrack(board, visited);
+    while(forward_check(board, index)){
+        if(board->cells[index].remainder == 1){
+            fill_single(board, index);
+            update_neighbors(board, index);
+        }
+        if(backtrack(board, visited))
+            return true;
     }
 
-    if(!forward_check(board, index))
-        undo(board, index);
+    undo(board, current);
 
-    return backtrack(board, visited);
+    return false;
 }
 
 void solve(Board *board){
