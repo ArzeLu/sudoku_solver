@@ -82,7 +82,7 @@ void fill_single(Board *board, int index){
 bool fill_all_singles(Board *board){
     bool filled = false;
 
-    #pragma omp parallel for schedule(static) reduction(|:filled) if(!use_parallel) // prevent race condition of writing to the same boolean
+    #pragma omp parallel for schedule(static) reduction(|:filled) // prevent race condition of writing to the same boolean
     for(int i = 0; i < NUM_CELLS; i++){
         Cell *cell = &board->cells[i];
         if(cell->remainder == 1){
@@ -218,4 +218,16 @@ int bit_position(uint16_t mask){
         value++;
     }
     return value;
+}
+
+/// Brian Kernighan's trick
+/// find the total number of 1's in a binary number
+/// DONE
+int pop_count(uint16_t mask){
+    int count = 0;
+    while(mask){
+        mask &= (mask - 1);
+        count++;
+    }
+    return count;
 }

@@ -16,5 +16,6 @@ uint16_t scan_col(Board *board, int position);
 uint16_t scan_box(Board *board, int position);
 bool scan_neighbor(Board *board, int index, int value);
 int bit_position(uint16_t mask);
+int pop_count(uint16_t mask);
 
 #endif
