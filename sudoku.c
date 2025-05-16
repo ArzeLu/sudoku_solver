@@ -123,6 +123,7 @@ void solve(Board *board){
         Record *current = copy.record;
 
         for(int i = start; i < end; i++){
+            printf("solving %d", i);
             if(backtrack(&copy)){
                 atomic_store(&solved, 1);
                 print_board(&copy);
@@ -151,5 +152,6 @@ int main(int argc, char *argv[]){
 
     omp_set_num_threads(threads);
 
+    printf("solving...");
     solve(&board);
 }

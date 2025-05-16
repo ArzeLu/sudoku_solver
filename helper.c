@@ -60,6 +60,31 @@ void copy_board(Board *original, Board *copy){
     }
 }
 
+/// Find what position the flipped bit is in.
+/// only in the case of when only one bit is 1 in the mask,
+/// or if you want to find the smallest position.
+int bit_position(uint16_t mask){
+    int value = 1;
+    if(mask == 0) printf("error 1 in bit_position");
+    while(!(mask & 1)){
+        mask >>= 1;
+        value++;
+    }
+    return value;
+}
+
+/// Brian Kernighan's trick
+/// find the total number of 1's in a binary number
+/// DONE
+int pop_count(uint16_t mask){
+    int count = 0;
+    while(mask){
+        mask &= (mask - 1);
+        count++;
+    }
+    return count;
+}
+
 /// @brief Given the index, fill a single-candidate cell.
 /// @param board 
 /// @param index 
@@ -205,29 +230,4 @@ bool scan_neighbor(Board *board, int index, int value){
     }
 
     return true;
-}
-
-/// Find what position the flipped bit is in.
-/// only in the case of when only one bit is 1 in the mask,
-/// or if you want to find the smallest position.
-int bit_position(uint16_t mask){
-    int value = 1;
-    if(mask == 0) printf("error 1 in bit_position");
-    while(!(mask & 1)){
-        mask >>= 1;
-        value++;
-    }
-    return value;
-}
-
-/// Brian Kernighan's trick
-/// find the total number of 1's in a binary number
-/// DONE
-int pop_count(uint16_t mask){
-    int count = 0;
-    while(mask){
-        mask &= (mask - 1);
-        count++;
-    }
-    return count;
 }
