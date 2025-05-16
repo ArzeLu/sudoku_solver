@@ -58,9 +58,9 @@ void update_neighbors(Board *board, int index){
         int col_neighbor_index = col_cell[col[index]][i];
         int box_neighbor_index = box_cell[box[index]][i];
 
-        update_neighbor(board, row_neighbor_index, value, &visited);
-        update_neighbor(board, col_neighbor_index, value, &visited);
-        update_neighbor(board, box_neighbor_index, value, &visited);
+        update_neighbor(board, row_neighbor_index, value, visited);
+        update_neighbor(board, col_neighbor_index, value, visited);
+        update_neighbor(board, box_neighbor_index, value, visited);
     }
 }
 
@@ -83,9 +83,9 @@ void restore_neighbors(Board *board, int index, int value){
         int col_neighbor_index = col_cell[col[index]][i];
         int box_neighbor_index = box_cell[box[index]][i];
 
-        restore_neighbor(board, row_neighbor_index, value, &visited);
-        restore_neighbor(board, col_neighbor_index, value, &visited);
-        restore_neighbor(board, box_neighbor_index, value, &visited);
+        restore_neighbor(board, row_neighbor_index, value, visited);
+        restore_neighbor(board, col_neighbor_index, value, visited);
+        restore_neighbor(board, box_neighbor_index, value, visited);
     }
 }
 

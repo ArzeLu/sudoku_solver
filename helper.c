@@ -1,6 +1,6 @@
 #include "libs.h"
 #include "board.h"
-#include "record_helper.c"
+#include "constants.h"
 
 static const int row[NUM_CELLS] = ROW_POSITION;
 static const int col[NUM_CELLS] = COL_POSITION;

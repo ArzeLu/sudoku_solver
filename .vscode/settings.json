@@ -3,6 +3,7 @@
     "files.associations": {
         "board.h": "c",
         "type_traits": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "libs.h": "c"
     }
 }

@@ -17,7 +17,9 @@
 ///TODO: hardcode the fucking traversals. it's fixed sized board anyway.
 ///TODO: make helpers for restore and update
 
-#include "helper.c"
+#include "libs.h"
+#include "board.h"
+#include "constants.h"
 
 static const int row[NUM_CELLS] = ROW_POSITION;
 static const int col[NUM_CELLS] = COL_POSITION;
