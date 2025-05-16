@@ -4,6 +4,7 @@
         "board.h": "c",
         "type_traits": "c",
         "cstdlib": "c",
-        "libs.h": "c"
+        "libs.h": "c",
+        "constants.h": "c"
     }
 }

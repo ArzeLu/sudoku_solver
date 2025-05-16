@@ -1,4 +1,5 @@
 #include "libs.h"
+#include "record_helper.h"
 #include "board.h"
 #include "constants.h"
 

@@ -18,6 +18,8 @@
 ///TODO: make helpers for restore and update
 
 #include "libs.h"
+#include "helper.h"
+#include "record_helper.h"
 #include "board.h"
 #include "constants.h"
 
@@ -35,7 +37,7 @@ atomic_int solved = 0;
 /// At the end, keeps filling the single-candidate cells and stop if none found.
 /// DONE
 bool constraint_propagation(Board *board){
-    #pragma omp parallel if(!use_parallel)
+    #pragma omp parallel
     {
         uint16_t row_mask[N];
         uint16_t col_mask[N];
