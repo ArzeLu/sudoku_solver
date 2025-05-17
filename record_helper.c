@@ -8,29 +8,40 @@ static const int row_cell[N][N] = ROW_TRAVERSAL;
 static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
 
+Record* generate_dummy(){
+    Record *dummy = calloc(1, sizeof(Record));  // zeroes all fields
+    if (!dummy) {
+        printf("malloc failed in generate_dummy\n");
+        exit(1);
+    }
+    return dummy;
+}
+
 /// @brief Given the board and the index, make a record
 ///        of the cell and add it to the linked list in the board.
 /// @param board 
 /// @param index 
 void push_record(Board *board, int index){
     Cell *cell = &board->cells[index];
-    Record *new = malloc(sizeof(Record));
-    if(!new) printf("error 1 in push_record");
+    Record *new_record = malloc(sizeof(Record));
     
-    new->index = index;
-    new->value = cell->value;
-    new->candidates = cell->candidates;
-    new->remainder = cell->remainder;
+    if(!new_record){
+        printf("error 1 in push_record");
+        exit(1);
+    }
+    
+    new_record->index = index;
+    new_record->value = cell->value;
+    new_record->candidates = cell->candidates;
+    new_record->remainder = cell->remainder;
+    new_record->next = NULL;
 
-    if(board->record == NULL){
-        board->record = new;
-        board->record->prev = NULL;
-        board->record->next = NULL;
+    if(board->tail == NULL){
+        board->head = new_record;
+        board->tail = new_record;
     }else{
-        board->record->next = new;
-        new->prev = board->record;
-        new->next = NULL;
-        board->record = new;
+        board->tail->next = new_record;
+        board->tail = new_record;
     }
 }
 
@@ -90,26 +101,26 @@ void restore_neighbors(Board *board, int index, int value){
 }
 
 void undo(Board *board, Record *record){
+    if(record == NULL) return;
+
+    undo(board, record->next);
+
     int index = record->index;
     Cell *cell = &board->cells[index];
-    int value = board->cells[index].value;
-
-    restore_neighbors(board, index, value);
 
     cell->candidates = record->candidates;
     cell->value = record->value;
     cell->remainder = record->remainder;
 }
 
-void free_record(Record *record){
-    if(record == NULL) return;
+void free_record(Record **record){
+    if(*record == NULL) return;
 
-    free_record(record->next);
-
-    record->next = NULL;
-    record->prev = NULL;
-
-    free(record);
+    free_record(&((*record)->next));
+    
+    (*record)->next = NULL;
+    free(*record);
+    (*record) = NULL;
 
     return;
 }

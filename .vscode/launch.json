@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Debug C Program",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/sudoku",         // or change to your actual binary
+            "args": ["2", "560000470409360501308510200045090010032751000100002307010905700007130046004000000"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",                               // use "lldb" if you're on macOS
+            "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe",              // change if your gdb is elsewhere
+            "setupCommands": [
+                {
+                    "description": "Enable pretty printing",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build"                        // optional, triggers auto-build
+        }
+    ]
+}

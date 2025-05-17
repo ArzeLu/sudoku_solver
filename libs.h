@@ -4,5 +4,4 @@
 #include <omp.h>
 #include <stdint.h>
 #include <math.h>
-#include <stdatomic.h>
 #include <string.h>

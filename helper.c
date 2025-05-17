@@ -30,41 +30,48 @@ void print_board(Board *board){
             counter = 0;
         }
     }
+    printf("\n\n");
 }
 
 /// Populate the board with the given inputs.
 /// Not random.
-void populate(Board *board, char input[]){
-    for(int i = 0; i < N * N; i++){
+void populate(Board *board, char input[]){    
+    for(int i = 0; i < NUM_CELLS; i++){
             int value = input[i] - '0';
-            board->cells[i].value = value;
-
+            Cell *cell = &board->cells[i];
+            cell->value = value;
             if(value > 0){
-                board->cells[i].candidates = 0;
-                board->cells[i].remainder = 0;
+                cell->candidates = 0;
+                cell->remainder = 0;
             }else{
-                board->cells[i].candidates = 0x1FF;
-                board->cells[i].remainder = 9;
+                cell->candidates = 0x3FE;
+                cell->remainder = 9;
             }
     }
-    board->record = NULL;
+    board->head = NULL;
+    board->tail = NULL;
 }
 
 /// Deep copy board
 void copy_board(Board *original, Board *copy){
-    #pragma omp for schedule(static)
     for(int i = 0; i < NUM_CELLS; i++){
-        copy->cells[i].candidates = original->cells[i].candidates;
-        copy->cells[i].remainder = original->cells[i].remainder;
-        copy->cells[i].value = original->cells[i].value;
+        Cell *new_cell = &copy->cells[i];
+        Cell *cell = &original->cells[i];
+        new_cell->candidates = cell->candidates;
+        new_cell->remainder = cell->remainder;
+        new_cell->value = cell->value;
     }
+
+    Record *dummy = generate_dummy();
+    copy->head = dummy;
+    copy->tail = dummy;
 }
 
 /// Find what position the flipped bit is in.
 /// only in the case of when only one bit is 1 in the mask,
 /// or if you want to find the smallest position.
 int bit_position(uint16_t mask){
-    int value = 1;
+    int value = 0;
     if(mask == 0) printf("error 1 in bit_position");
     while(!(mask & 1)){
         mask >>= 1;
@@ -162,13 +169,13 @@ int find_mrv_cell(Board *board){
 /// Given the position of the row,
 /// Return the bitmask of available candidates of the row.
 uint16_t scan_row(Board *board, int position){
-    uint16_t mask = 0;
-    int start = position * N;
-    int end = start + N;
-    for(int i = start; i < end; i++){
-        int value = board->cells[i].value;
+    uint16_t mask = 0x3FE;
+
+    for(int i = 0; i < N; i++){
+        int index = row_cell[position][i];
+        int value = board->cells[index].value;
         if(value == 0) continue;
-        mask |= (1 << value);
+        mask &= ~(1 << value);
     }
     return mask;
 }
@@ -176,11 +183,12 @@ uint16_t scan_row(Board *board, int position){
 /// Given the position of the column,
 /// return the bitmask of available candidates of the column.
 uint16_t scan_col(Board *board, int position){
-    uint16_t mask = 0;
+    uint16_t mask = 0x3FE;
     for(int i = 0; i < N; i++){
-        int value = board->cells[i * N + position].value;
+        int index = col_cell[position][i];
+        int value = board->cells[index].value;
         if(value == 0) continue;
-        mask |= (1 << value);
+        mask &= ~(1 << value);
     }
     return mask;
 }
@@ -189,18 +197,13 @@ uint16_t scan_col(Board *board, int position){
 /// return the bitmask of available candidates. 
 /// The box traversal goes right then down.
 uint16_t scan_box(Board *board, int position){
-    uint16_t mask = 0;
-    int box_row = (position / n) * n;
-    int box_column = (position % n) * n;
-    for(int i = 0; i < n; i++){
-        for(int j = 0; j < n; j++){
-            int box_x = box_row + i;
-            int box_y = box_column + j;
-            int index = box_x * N + box_y;
-            int value = board->cells[index].value;
-            if(value == 0) continue;
-            mask |= (1 << value);
-        }
+    uint16_t mask = 0x3FE;
+
+    for(int i = 0; i < N; i++){
+        int index = box_cell[position][i];
+        int value = board->cells[index].value;
+        if(value == 0) continue;
+        mask &= ~(1 << value);
     }
 
     return mask;

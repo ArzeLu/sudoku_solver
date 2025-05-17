@@ -9,7 +9,6 @@ typedef struct Record{
     uint8_t value;       // 0-9
     uint8_t remainder;   // 0-9
     uint16_t candidates; // bitmask for valid candidates. 1 for valid
-    struct Record *prev;
     struct Record *next;
 } Record;
 
@@ -21,7 +20,8 @@ typedef struct Cell{
 
 typedef struct Board{
     Cell cells[NUM_CELLS];
-    Record *record;
+    Record *head;
+    Record *tail;
 } Board;
 
 #endif

@@ -14,8 +14,8 @@
 
 ///TODO: consider dynamic padding
 ///TODO: see if i can get rid of "check_complete" for a faster solution
-///TODO: hardcode the fucking traversals. it's fixed sized board anyway.
-///TODO: make helpers for restore and update
+///TODO: consider using csp every time there's a single candidate cell
+///TODO: only divide up the nodes that have no values
 
 #include "libs.h"
 #include "helper.h"
@@ -29,8 +29,6 @@ static const int box[NUM_CELLS] = BOX_POSITION;
 static const int row_cell[N][N] = ROW_TRAVERSAL;
 static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
-
-atomic_int solved = 0;
 
 /// Readjust the number of remaining possible candidates for all cells.
 /// Assign the cell with a value if there's only one remaining.
@@ -53,7 +51,7 @@ bool constraint_propagation(Board *board){
         #pragma omp for schedule(static)
         for(int i = 0; i < NUM_CELLS; i++){
             Cell *cell = &board->cells[i];
-            if(cell->remainder == 0) continue;
+            if(cell->value != 0) continue;
             cell->candidates = row_mask[row[i]] & col_mask[col[i]] & box_mask[box[i]]; // update the candidates
             cell->remainder = pop_count(cell->candidates); // update the remaining count
         }
@@ -65,7 +63,6 @@ bool constraint_propagation(Board *board){
 /// Checks to see if a cell produce a dead end.
 bool forward_check(Board *board, int index, int value){
     Cell *cell = &board->cells[index];
-
     return scan_neighbor(board, index, value);
 }
 
@@ -74,17 +71,15 @@ bool forward_check(Board *board, int index, int value){
 /// @param visited 
 /// @return 
 bool backtrack(Board *board){
-    if(atomic_load(&solved))
-        return false;
-
     if(check_complete(board))
         return true;
-
-    Record *current = board->record;
 
     /// Find mrv index, explore all candidates with that index,
     /// then roll back the recursion once this cell index is used up.
     int index = find_mrv_cell(board); // Return the index of the cell with least number of remainders.
+    
+    Record *current = board->tail;
+
     push_record(board, index);
 
     uint16_t candidates = board->cells[index].candidates;
@@ -92,7 +87,7 @@ bool backtrack(Board *board){
     while(candidates){
         int value = bit_position(candidates);
         update_cell(board, index, value);
-
+        
         if(forward_check(board, index, value))
             if(backtrack(board))
                 return true;
@@ -101,8 +96,9 @@ bool backtrack(Board *board){
         candidates ^= (1 << value);
     }
 
-    undo(board, current);
-    free_record(current);
+    undo(board, current->next);
+    free_record(&current->next);
+    current->next = NULL;
     return false;
 }
 
@@ -117,21 +113,23 @@ void solve(Board *board){
         int start = id * portion;
         int end = (id + 1 == threads) ? NUM_CELLS : start + portion;
 
-        Board copy;
-        copy_board(board, &copy);
-
-        Record *current = copy.record;
+        Board *copy = malloc(sizeof(Board));
+        copy_board(board, copy);
 
         for(int i = start; i < end; i++){
-            printf("solving %d", i);
-            if(backtrack(&copy)){
-                atomic_store(&solved, 1);
-                print_board(&copy);
+            if(copy->cells[i].value != 0) continue;
+            if(backtrack(copy)){
+                #pragma omp critical
+                {
+                    copy_board(copy, board);
+                }
             }
-            if(atomic_load(&solved))
-                break;
+            free_record(&copy->head);
+            copy->head = generate_dummy();
+            copy->tail = copy->head;
         }
-        free_record(current);
+        free_record(&copy->head);
+        free(copy);
     }
 }
 
@@ -152,6 +150,6 @@ int main(int argc, char *argv[]){
 
     omp_set_num_threads(threads);
 
-    printf("solving...");
     solve(&board);
+    print_board(&board);
 }
