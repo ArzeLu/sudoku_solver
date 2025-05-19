@@ -97,16 +97,18 @@ bool backtrack(Board *board){
     /// then roll back the recursion if all failed.
     int index = find_mrv_cell(board);
     
-    add_record(board);
-    add_entry(board, index);
+    add_record(board);         // Start a record for this recursion.
+    add_entry(board, index);   // Add the mrv cell in the record.
 
     Record *current = board->record;
     uint16_t candidates = board->cells[index].candidates;
 
-    if(board->cells[index].remainder == 1){
+    if(board->cells[index].remainder == 1){          // Go the CSP route if one candidate remains.
         fill_single(board, index);
         while(constraint_propagation(board, false));
-    }else{
+        if(backtrack(board))
+            return true;
+    }else{                                           // Otherwise, try all candidates.
         while(candidates){
             int value = bit_position(candidates);
             edit_cell(board, index, value);
