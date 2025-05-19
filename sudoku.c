@@ -30,12 +30,14 @@ static const int row_cell[N][N] = ROW_TRAVERSAL;
 static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
 
-/// Readjust the number of remaining possible candidates for all cells.
-/// Assign the cell with a value if there's only one remaining.
-/// At the end, keeps filling the single-candidate cells and stop if none found.
-/// DONE
-bool constraint_propagation(Board *board){
-    #pragma omp parallel
+/// @brief Readjust the number of remaining possible candidates for all cells.
+///        Assign the cell with a value if there's only one remaining.
+///        At the end, keeps filling the single-candidate cells and stop if none found.
+/// @param board 
+/// @param parallelize 
+/// @return 
+bool constraint_propagation(Board *board, bool parallelize){
+    #pragma omp parallel if(parallelize)
     {
         uint16_t row_mask[N];
         uint16_t col_mask[N];
@@ -51,13 +53,23 @@ bool constraint_propagation(Board *board){
         #pragma omp for schedule(static)
         for(int i = 0; i < NUM_CELLS; i++){
             Cell *cell = &board->cells[i];
+
             if(cell->value != 0) continue;
-            cell->candidates = row_mask[row[i]] & col_mask[col[i]] & box_mask[box[i]]; // update the candidates
-            cell->remainder = pop_count(cell->candidates); // update the remaining count
+
+            uint16_t mask = row_mask[row[i]] & col_mask[col[i]] & box_mask[box[i]];
+
+            if(!parallelize){                  // Need to consider cell records if serialized, signaling backtrack stage.
+                if(cell->candidates != mask){  // Only add a record if candidates changed.
+
+                }
+            }
+
+            cell->candidates = mask;// update the candidates
+            cell->remainder = pop_count(cell->candidates);    // update the remaining count
         }
     }
     
-    return fill_all_singles(board);
+    return fill_all_singles(board, parallelize);
 }
 
 /// @brief Check if the cell value produces a dead end.
@@ -67,11 +79,13 @@ bool constraint_propagation(Board *board){
 /// @param index 
 /// @param value 
 /// @return 
-bool forward_check(Board *board, int index, int value){
-    return scan_neighbor(board, index, value); // Check neighbor validity
+bool forward_check(Board *board, int index){
+    return scan_neighbor(board, index); // Check neighbor validity
 }
 
-/// @brief Find a
+/// @brief Find solution by guessing.
+///        Recursively try each candidate of each cell.
+///        Retreat a level if all candidates failed.
 /// @param board 
 /// @param visited 
 /// @return 
@@ -80,29 +94,34 @@ bool backtrack(Board *board){
         return true;
 
     /// Find mrv index, explore all candidates with that index,
-    /// then roll back the recursion once this cell index is used up.
-    int index = find_mrv_cell(board); // Return the index of the cell with least number of remainders.
+    /// then roll back the recursion if all failed.
+    int index = find_mrv_cell(board);
     
-    Record *current = board->tail;
+    add_record(board);
+    add_entry(board, index);
 
-    record_cell(board, index);
-
+    Record *current = board->record;
     uint16_t candidates = board->cells[index].candidates;
 
-    while(candidates){
-        int value = bit_position(candidates);
-        update_cell(board, index, value);
-        
-        if(forward_check(board, index, value))
-            if(backtrack(board))
-                return true;
-                
-        restore_neighbors(board, index, value);
-        candidates ^= (1 << value);
+    if(board->cells[index].remainder == 1){
+        fill_single(board, index);
+        while(constraint_propagation(board, false));
+    }else{
+        while(candidates){
+            int value = bit_position(candidates);
+            edit_cell(board, index, value);
+            
+            if(forward_check(board, index))
+                if(backtrack(board))
+                    return true;
+                    
+            restore_neighbors(board, index, value);
+            candidates ^= (1 << value);
+        }
     }
 
-    undo(board, current->next);
-    free_record(&current->next);
+    undo(board, current);
+    free_record(&current);
     current->next = NULL;
     return false;
 }
@@ -111,7 +130,7 @@ bool backtrack(Board *board){
 ///        Start backtracking thread portion.
 /// @param board 
 void solve(Board *board){
-    while(constraint_propagation(board));            // Repeat CSP if a cell was filled. Refer to CSP function comments.
+    while(constraint_propagation(board, true));            // Repeat CSP if a cell was filled. Refer to CSP function comments.
 
     #pragma omp parallel
     {
@@ -122,23 +141,23 @@ void solve(Board *board){
         int start = id * portion;
         int end = (id + 1 == threads) ? NUM_CELLS : start + portion;
 
-        Board *copy = malloc(sizeof(Board));         // Prevent shared memory faults.
-        copy_board(board, copy);                     // Each thread gets its own copy of the board.
+        Board copy;         // Prevent shared memory faults.
+        copy_board(board, &copy);                     // Each thread gets its own copy of the board.
 
         for(int i = start; i < end; i++){
-            if(copy->cells[i].value != 0) continue;  // Only start with empty cells.
-            if(backtrack(copy)){                     // Only true if the board is solved.
+            if(&copy.cells[i].value != 0) continue;  // Only start with empty cells.
+            if(backtrack(&copy)){                     // Only true if the board is solved.
                 #pragma omp critical
                 {
-                    copy_board(copy, board);         // Copy the board back to the shared memory for main.
+                    copy_board(&copy, board);         // Copy the board back to the shared memory for main.
                 }
             }
             // free_record(&copy->head);
             // copy->head = generate_dummy();
             // copy->tail = copy->head;
         }
-        free_record(&copy->head);
-        free(copy);
+        free_record(&copy.record);
+        free(&copy);
     }
 }
 

@@ -66,8 +66,7 @@ void copy_board(Board *original, Board *copy){
         new_cell->remainder = old_cell->remainder;
         new_cell->value = old_cell->value;
     }
-
-    copy->record = generate_dummy();
+    copy->record = NULL;
 }
 
 /// @brief Find the position of the right-most flipped bit.
@@ -119,12 +118,12 @@ void fill_single(Board *board, int index){
 /// @param board 
 /// @param parallel 
 /// @return 
-bool fill_all_singles(Board *board, bool parallel){
+bool fill_all_singles(Board *board, bool parallelize){
     bool filled = false;
 
     /// The clause "reduction(|:filled) prevents race condition of writing to the same boolean.
     /// The clause "if(parallel)" toggles parallelization.
-    #pragma omp parallel for schedule(static) reduction(|:filled) if(parallel)
+    #pragma omp parallel for schedule(static) reduction(|:filled) if(parallelize)
     for(int i = 0; i < NUM_CELLS; i++){
         if(board->cells[i].remainder == 1){
             fill_single(board, i);
@@ -135,11 +134,11 @@ bool fill_all_singles(Board *board, bool parallel){
     return filled;
 }
 
-/// @brief Update a target cell given its index and a new value.
+/// @brief Edit a target cell given its index and a new value.
 /// @param board 
 /// @param index 
 /// @param value 
-void update_cell(Board *board, int index, int value){
+void edit_cell(Board *board, int index, int value){
     Cell *cell = &board->cells[index];
 
     if(!(cell->candidates & (1 << value))){ // Cell value isn't available in its candidates
@@ -242,7 +241,8 @@ uint16_t scan_box(Board *board, int position){
 /// @param index 
 /// @param value 
 /// @return 
-bool scan_neighbor(Board *board, int index, int value){
+bool scan_neighbor(Board *board, int index){
+    int value = board->cells[index].value;
     uint16_t mask = (1 << value);
 
     for(int i = 0; i < N; i++){
