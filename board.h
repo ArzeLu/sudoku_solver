@@ -20,8 +20,7 @@ typedef struct Cell{
 
 typedef struct Board{
     Cell cells[NUM_CELLS];
-    Record *head;
-    Record *tail;
+    Record *record;
 } Board;
 
 #endif

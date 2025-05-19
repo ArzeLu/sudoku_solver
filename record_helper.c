@@ -21,7 +21,7 @@ Record* generate_dummy(){
 ///        of the cell and add it to the linked list in the board.
 /// @param board 
 /// @param index 
-void push_record(Board *board, int index){
+void record_cell(Board *board, int index){
     Cell *cell = &board->cells[index];
     Record *new_record = malloc(sizeof(Record));
     
@@ -34,15 +34,8 @@ void push_record(Board *board, int index){
     new_record->value = cell->value;
     new_record->candidates = cell->candidates;
     new_record->remainder = cell->remainder;
-    new_record->next = NULL;
-
-    if(board->tail == NULL){
-        board->head = new_record;
-        board->tail = new_record;
-    }else{
-        board->tail->next = new_record;
-        board->tail = new_record;
-    }
+    new_record->next = board->record;
+    board->record = new_record;
 }
 
 void update_neighbor(Board *board, int index, int value, bool *visited){

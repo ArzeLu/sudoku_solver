@@ -60,10 +60,15 @@ bool constraint_propagation(Board *board){
     return fill_all_singles(board);
 }
 
-/// Checks to see if a cell produce a dead end.
+/// @brief Check if the cell value produces a dead end.
+///        Check only the neighbors,
+///        as the cell validation is guaranteed.
+/// @param board 
+/// @param index 
+/// @param value 
+/// @return 
 bool forward_check(Board *board, int index, int value){
-    Cell *cell = &board->cells[index];
-    return scan_neighbor(board, index, value);
+    return scan_neighbor(board, index, value); // Check neighbor validity
 }
 
 /// @brief Find a
@@ -80,7 +85,7 @@ bool backtrack(Board *board){
     
     Record *current = board->tail;
 
-    push_record(board, index);
+    record_cell(board, index);
 
     uint16_t candidates = board->cells[index].candidates;
 
@@ -102,39 +107,48 @@ bool backtrack(Board *board){
     return false;
 }
 
+/// @brief Solve by parallelizing the top level. 
+///        Start backtracking thread portion.
+/// @param board 
 void solve(Board *board){
-    while(constraint_propagation(board)); // Repeat CSP if a cell was filled. Refer to CSP function comments.
+    while(constraint_propagation(board));            // Repeat CSP if a cell was filled. Refer to CSP function comments.
 
     #pragma omp parallel
     {
+        /// Calculate work portion for each thread.
         int threads = omp_get_num_threads();
         int id = omp_get_thread_num();
         int portion = floor(NUM_CELLS / threads);
         int start = id * portion;
         int end = (id + 1 == threads) ? NUM_CELLS : start + portion;
 
-        Board *copy = malloc(sizeof(Board));
-        copy_board(board, copy);
+        Board *copy = malloc(sizeof(Board));         // Prevent shared memory faults.
+        copy_board(board, copy);                     // Each thread gets its own copy of the board.
 
         for(int i = start; i < end; i++){
-            if(copy->cells[i].value != 0) continue;
-            if(backtrack(copy)){
+            if(copy->cells[i].value != 0) continue;  // Only start with empty cells.
+            if(backtrack(copy)){                     // Only true if the board is solved.
                 #pragma omp critical
                 {
-                    copy_board(copy, board);
+                    copy_board(copy, board);         // Copy the board back to the shared memory for main.
                 }
             }
-            free_record(&copy->head);
-            copy->head = generate_dummy();
-            copy->tail = copy->head;
+            // free_record(&copy->head);
+            // copy->head = generate_dummy();
+            // copy->tail = copy->head;
         }
         free_record(&copy->head);
         free(copy);
     }
 }
 
+/// @brief Take in two arguments: 
+///        number of threads, and the board in 1D array form. Zero for empty cell.
+/// @param argc 
+/// @param argv 
+/// @return 
 int main(int argc, char *argv[]){
-    int threads = 9;
+    int threads = 1;
     Board board;
 
     if(argc > 1){
