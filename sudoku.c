@@ -113,11 +113,12 @@ bool backtrack(Board *board){
             int value = bit_position(candidates);
             edit_cell(board, index, value);
             
-            if(forward_check(board, index))
+            if(forward_check(board, index)){
+                update_neighbors(board, index);
                 if(backtrack(board))
                     return true;
-                    
-            restore_neighbors(board, index, value);
+                restore_neighbors(board, index, value);
+            }
             candidates ^= (1 << value);
         }
     }
