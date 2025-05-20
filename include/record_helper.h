@@ -5,11 +5,11 @@
 
 Record* generate_dummy();
 void record_cell(Board *board, int index);
-void update_neighbor(Board *board, int index, int value, bool *visited);
+void update_neighbor(Board *board, int index, int value);
 void update_neighbors(Board *board, int index);
-void restore_neighbor(Board *board, int index, int value, bool *visited);
-void restore_neighbors(Board *board, int index, int value);
-void undo(Board *board, Record *record);
+void restore_neighbor(Board *board, int index);
+void restore_neighbors(Board *board, int index);
+void undo(Board *board);
 void free_record(Record **record);
 
 #endif

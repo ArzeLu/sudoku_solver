@@ -10,14 +10,14 @@ typedef struct Cell{
     uint16_t candidates;     // bitmask for valid candidates. 1 for valid
 } Cell;
 
-typedef struct Entry{         // Individual cell changes.
+typedef struct Entry{        // Individual cell changes.
     int index;
     Cell cell;
     struct Entry *next;
 } Entry;
 
 typedef struct Record{       // A record of all cell changes.
-    bool recorded[NUM_CELLS];
+    bool written[NUM_CELLS];
     Entry entries;
     struct Record *next;
 } Record;

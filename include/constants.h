@@ -4,6 +4,7 @@
 #define n 3
 #define N 9
 #define NUM_CELLS 81
+#define INITIAL_MASK 0x3FE // flip the bits in the right hand side from 1 to 9. 0000001111111110
 
 #define ROW_POSITION { \
     0, 0, 0, 0, 0, 0, 0, 0, 0, \

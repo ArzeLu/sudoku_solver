@@ -8,10 +8,12 @@ static const int row_cell[N][N] = ROW_TRAVERSAL;
 static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
 
-/// @brief Given the board and the index, make a record
-///        of the cell and add it to the linked list in the board.
-/// @param board 
-/// @param index 
+/**
+ * @brief Given the board and the index, make a record
+ *        of the cell and add it to the linked list in the board.
+ * @param board 
+ * @param index 
+ */
 void record_cell(Board *board, int index){
     Cell *cell = &board->cells[index];
     Record *new_record = malloc(sizeof(Record));
@@ -35,28 +37,33 @@ void record_cell(Board *board, int index){
     }
 }
 
-/// @brief Update the candidates of the neighbors of a cell
-///        with its new value by flipping the corresponding
-///        bit to zero, marking it unavailable.
-///        Function is used exclusively by update_neighbor().
-/// @param board 
-/// @param index 
-/// @param value 
-/// @param visited 
-void update_neighbor(Board *board, int index, int value, bool *visited){
-    Cell *cell = &board->cells[index];
-    if(!visited[index]){   // Avoid clashes. Row, column, and box regions have overlapping cells.
-        if(cell->candidates & (1 << value)){
-            cell->candidates &= ~(1 << value);
-            cell->remainder -= 1;
+/**
+ * @brief Update the candidates of the neighbors of a cell
+ *        with its new value by flipping the corresponding
+ *        bit to zero, marking it unavailable.
+ *        Function is used exclusively by update_neighbor().
+ * @param board 
+ * @param index 
+ * @param value 
+ * @param visited 
+ */
+void update_neighbor(Board *board, int index, int value){
+    Cell *neighbor = &board->cells[index];
+
+    if(!board->record->written[index]){
+        add_entry(board, index);
+        if(neighbor->candidates & (1 << value)){
+            neighbor->candidates ^= (1 << value);
+            neighbor->remainder -= 1;
         }
-        visited[index] = true;
     }
 }
 
-/// @brief Given a target index, update the candidates of the neighbors on the target's new value.
-/// @param board 
-/// @param index 
+/**
+ * @brief Given a target index, update the candidates of the neighbors on the target's new value.
+ * @param board 
+ * @param index 
+ */
 void update_neighbors(Board *board, int index){
     int value = board->cells[index].value;
     
@@ -74,12 +81,14 @@ void update_neighbors(Board *board, int index){
     }
 }
 
-/// @brief Restore the neighbors by resetting their candidate masks.
-///        Function is used exclusively by restore_neighbors().
-/// @param board 
-/// @param index 
-/// @param value 
-/// @param visited 
+/**
+ * @brief Restore the neighbors by resetting their candidate masks.
+ *        Function is used exclusively by restore_neighbors().
+ * @param board 
+ * @param index 
+ * @param value 
+ * @param visited 
+ */
 void restore_neighbor(Board *board, int index, int value, bool *visited){
     Cell *cell = &board->cells[index];
 

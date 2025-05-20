@@ -10,9 +10,11 @@ static const int row_cell[N][N] = ROW_TRAVERSAL;
 static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
 
-/// @brief See if the board is solved
-/// @param board 
-/// @return 
+/**
+ * @brief See if the board is solved.
+ * @param board 
+ * @return 
+ */
 bool check_complete(Board *board){
     for(int i = 0; i < NUM_CELLS; i++){
         if(board->cells[i].value == 0) return false;
@@ -33,9 +35,11 @@ void print_board(Board *board){
     printf("\n\n");
 }
 
-/// @brief Populate the board with given inputs.
-/// @param board 
-/// @param input 
+/**
+ * @brief Populate the board with given inputs.
+ * @param board 
+ * @param input 
+ */
 void populate(Board *board, char input[]){    
     for(int i = 0; i < NUM_CELLS; i++){
             Cell *cell = &board->cells[i];
@@ -47,16 +51,18 @@ void populate(Board *board, char input[]){
                 cell->candidates = 0;
                 cell->remainder = 0;
             }else{
-                cell->candidates = 0x3FE;
+                cell->candidates = INITIAL_MASK;
                 cell->remainder = 9;
             }
     }
     board->record = NULL;
 }
 
-/// @brief Deep copy a board.
-/// @param original 
-/// @param copy 
+/**
+ * @brief Deep copy a board.
+ * @param original 
+ * @param copy 
+ */
 void copy_board(Board *original, Board *copy){
     for(int i = 0; i < NUM_CELLS; i++){
         Cell *new_cell = &copy->cells[i];
@@ -69,37 +75,54 @@ void copy_board(Board *original, Board *copy){
     copy->record = NULL;
 }
 
-/// @brief Find the position of the right-most flipped bit.
-/// @param mask 
-/// @return 
+/**
+ * @brief Find the position of the right-most flipped bit.
+ * @param mask 
+ * @return 
+ */
 int bit_position(uint16_t mask){
     int value = 0;
-    if(mask == 0) printf("error 1 in bit_position");
+
+    if(mask == 0){
+        printf("error 1 in bit_position");
+        exit(1);
+    }
+
     while(!(mask & 1)){
         mask >>= 1;     // Shifts to the right.
         value++;
     }
+
     return value;
 }
 
-/// @brief Brian Kernighan's trick.
-///        Find numbers of all flipped bits in the mask.
-/// @param mask 
-/// @return 
+/**
+ * @brief Brian Kernighan's trick.
+ *        Find numbers of all flipped bits in the mask.
+ * @param mask 
+ * @return 
+ */
 int pop_count(uint16_t mask){
-    // This one needs visualization.
     int count = 0;
     while(mask){
         mask &= (mask - 1);
         count++;
     }
+
+    if(count > N){
+        printf("Error 1 in pop_count");
+        exit(1);
+    }
+
     return count;
 }
 
-/// @brief Given the index of a single-candidate cell, fill it.
-/// @param board 
-/// @param index 
-/// @return 
+/**
+ * @brief Given the index of a single-candidate cell, fill it.
+ * @param board 
+ * @param index 
+ * @return 
+ */
 void fill_single(Board *board, int index){
     Cell *cell = &board->cells[index];
 
@@ -113,17 +136,18 @@ void fill_single(Board *board, int index){
     cell->remainder = 0;
 }
 
-/// @brief Fill any block in the board that has just one remaining candidate.
-///        Return true if a value was filled.
-/// @param board 
-/// @param parallel 
-/// @return 
+/**
+ * @brief Fill any block in the board that has just one remaining candidate.
+ *        Return true if a value was filled.
+ * @param board 
+ * @param parallel 
+ * @return 
+ */
 bool fill_all_singles(Board *board){
     bool filled = false;
 
     /// The clause "reduction(|:filled) prevents race condition of writing to the same boolean.
-    /// The clause "if(parallel)" toggles parallelization.
-    #pragma omp parallel for schedule(static) reduction(|:filled) if(parallelize)
+    #pragma omp parallel for schedule(static) reduction(|:filled)
     for(int i = 0; i < NUM_CELLS; i++){
         if(board->cells[i].remainder == 1){
             fill_single(board, i);
@@ -134,10 +158,12 @@ bool fill_all_singles(Board *board){
     return filled;
 }
 
-/// @brief Edit a target cell given its index and a new value.
-/// @param board 
-/// @param index 
-/// @param value 
+/**
+ * @brief Edit a target cell given its index and a new value.
+ * @param board 
+ * @param index 
+ * @param value 
+ */
 void edit_cell(Board *board, int index, int value){
     Cell *cell = &board->cells[index];
 
@@ -156,16 +182,19 @@ void edit_cell(Board *board, int index, int value){
     cell->remainder -= 1;
 }
 
-/// @brief Find a cell with the least remainders.
-/// @param board 
-/// @return 
+/**
+ * @brief Find a cell with the least remainders.
+ *        Return -1 if there are no cells with remainder bigger than 0.
+ * @param board 
+ * @return 
+ */
 int find_mrv_cell(Board *board){
-    uint8_t smallest = board->cells[0].remainder;
-    int index = 0;
+    uint8_t smallest = N + 1;
+    int index = -1;
 
     for(int i = 0; i < NUM_CELLS; i++){
         uint8_t remainder = board->cells[i].remainder;
-        if(remainder < smallest && remainder != 0){
+        if(remainder < smallest && remainder > 0){
             smallest = remainder;
             index = i;
         }
@@ -174,73 +203,32 @@ int find_mrv_cell(Board *board){
     return index;
 }
 
-/// @brief Given the position of the row,
-///        return the bitmask of available candidates of the row.
-/// @param board 
-/// @param position 
-/// @return 
-uint16_t scan_row(Board *board, int position){
-    uint16_t mask = 0x3FE; // flip the bits in the right hand side from 1 to 9. 0000001111111110
-
-    /// When a value in the row is found,
-    /// turn the corresponding mask bit to zero.
-    /// Output isn't affected if the value is zero.
-    for(int i = 0; i < N; i++){
-        int index = row_cell[position][i];
-        int value = board->cells[index].value;
-        mask &= ~(1 << value);
-    }
-    return mask;
-}
-
-/// @brief Given the position of the column,
-///        return the bitmask of available candidates of the column.
-/// @param board 
-/// @param position 
-/// @return 
-uint16_t scan_col(Board *board, int position){
-    uint16_t mask = 0x3FE; // flip the bits in the right hand side from 1 to 9. 0000001111111110
-
-    /// When a value in the column is found,
-    /// turn the corresponding mask bit to zero.
-    /// Output isn't affected if the value is zero.
-    for(int i = 0; i < N; i++){
-        int index = col_cell[position][i];
-        int value = board->cells[index].value;
-        mask &= ~(1 << value);
-    }
-    return mask;
-}
-
-/// @brief Given the position of the box,
-///        return the bitmask of available candidates. 
-///        The box traversal goes right then down.
-/// @param board 
-/// @param position 
-/// @return 
-uint16_t scan_box(Board *board, int position){
-    uint16_t mask = 0x3FE; // flip the bits in the right hand side from 1 to 9. 0000001111111110
+uint16_t scan_local_regions(Board *board, int position){
+    uint16_t mask = INITIAL_MASK;
 
     /// When a value in the box is found,
     /// turn the corresponding mask bit to zero.
     /// Output isn't affected if the value is zero.
     for(int i = 0; i < N; i++){
-        int index = box_cell[position][i];
-        int value = board->cells[index].value;
-        mask &= ~(1 << value);
+        int r_index = row_cell[position][i];
+        int c_index = col_cell[position][i];
+        int b_index = box_cell[position][i];
+        mask &= ~(1 << board->cells[r_index].value) & ~(1 << board->cells[c_index].value) & ~(1 << board->cells[b_index].value);
     }
 
     return mask;
 }
 
-/// @brief Given the index of the board,
-///        see if the cell creates a dead end in its neighboring region.
-///        (row, column, and box).
-///        Returns true if it's safe.
-/// @param board 
-/// @param index 
-/// @param value 
-/// @return 
+/**
+ * @brief Given the index of the board,
+ *        see if the cell creates a dead end in its neighboring region.
+ *        (row, column, and box).
+ *        Returns true if it's safe.
+ * @param board 
+ * @param index 
+ * @param value 
+ * @return 
+ */
 bool scan_neighbor(Board *board, int index){
     int value = board->cells[index].value;
     uint16_t mask = (1 << value);
@@ -266,7 +254,6 @@ bool scan_neighbor(Board *board, int index){
         if((b_index != index) && (board->cells[b_index].value == 0))
             if((neighbor->candidates & mask) && (neighbor->remainder == 1))
                 return false;
-        
     }
 
     return true;
