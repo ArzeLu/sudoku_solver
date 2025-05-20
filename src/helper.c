@@ -203,7 +203,7 @@ int find_mrv_cell(Board *board){
     return index;
 }
 
-uint16_t scan_local_regions(Board *board, int position){
+uint16_t get_candidates_mask(Board *board, int position){
     uint16_t mask = INITIAL_MASK;
 
     /// When a value in the box is found,
@@ -213,10 +213,23 @@ uint16_t scan_local_regions(Board *board, int position){
         int r_index = row_cell[position][i];
         int c_index = col_cell[position][i];
         int b_index = box_cell[position][i];
-        mask &= ~(1 << board->cells[r_index].value) & ~(1 << board->cells[c_index].value) & ~(1 << board->cells[b_index].value);
+        mask &= ~(1 << board->cells[r_index].value);
+        mask &= ~(1 << board->cells[c_index].value);
+        mask &= ~(1 << board->cells[b_index].value);
     }
 
     return mask;
+}
+
+bool scan_neighbor(Board *board, int neighbor_index, uint16_t mask){
+    Cell *neighbor = &board->cells[neighbor_index];
+
+    if(neighbor->value == 0)
+        if(neighbor->candidates & mask)
+            if(neighbor->remainder == 1)
+                return false;
+            
+    return true;
 }
 
 /**
@@ -229,31 +242,28 @@ uint16_t scan_local_regions(Board *board, int position){
  * @param value 
  * @return 
  */
-bool scan_neighbor(Board *board, int index){
+bool scan_neighbors(Board *board, int index){
     int value = board->cells[index].value;
     uint16_t mask = (1 << value);
 
+    if(value == 0){
+        printf("Error 1 in scan_neighbors");
+        exit(1);
+    }
+
+    if(value > N || value < 0){
+        printf("Error 2 in scan_neighbors");
+        exit(2);
+    }
+    
     for(int i = 0; i < N; i++){
         int r_index = row_cell[row[index]][i];  // Index of a cell in the neighboring row
-        int c_index = col_cell[col[index]][i];  // Index of a cell in the neighboring column
+        int c_index = col_cell[col[index]][i];  // Index of a cell in the neighboring col
         int b_index = box_cell[box[index]][i];  // Index of a cell in the neighboring box
 
-        Cell *neighbor;
-
-        neighbor = &board->cells[r_index];
-        if((r_index != index) && (neighbor->value == 0))
-            if((neighbor->candidates & mask) && (neighbor->remainder == 1))
-                return false;
-        
-        neighbor = &board->cells[c_index];
-        if((c_index != index) && (board->cells[c_index].value == 0))
-            if((neighbor->candidates & mask) && (neighbor->remainder == 1))
-                return false;
-        
-        neighbor = &board->cells[b_index];
-        if((b_index != index) && (board->cells[b_index].value == 0))
-            if((neighbor->candidates & mask) && (neighbor->remainder == 1))
-                return false;
+        if(!scan_neighbor(board, r_index, mask)) return false;
+        if(!scan_neighbor(board, c_index, mask)) return false;
+        if(!scan_neighbor(board, b_index, mask)) return false;
     }
 
     return true;

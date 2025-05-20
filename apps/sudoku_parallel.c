@@ -27,7 +27,7 @@ bool constraint_propagation_all(Board *board){
 
         #pragma omp for schedule(static)       // Prevent openmp from choosing interleaving distribution. 
         for(int i = 0; i < N; i++){            // No "parallel" key word here because it's already in one.
-            regional_mask[i] = scan_local_region(board, i);  // Get the available candidates of each row.
+            regional_mask[i] = get_candidaets_mask(board, i);  // Get the available candidates of each row.
         }
         
         #pragma omp for schedule(static)
@@ -77,7 +77,7 @@ void constraint_propagation_single(Board *board, int index){
 * @return boolean, if the new cell value is valid.
 */
 bool forward_check(Board *board, int index){
-    return scan_neighbor(board, index); // Check neighbor validity
+    return scan_neighbors(board, index); // Check neighbor validity
 }
 
 /**
