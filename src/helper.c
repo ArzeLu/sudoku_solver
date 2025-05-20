@@ -118,7 +118,7 @@ void fill_single(Board *board, int index){
 /// @param board 
 /// @param parallel 
 /// @return 
-bool fill_all_singles(Board *board, bool parallelize){
+bool fill_all_singles(Board *board){
     bool filled = false;
 
     /// The clause "reduction(|:filled) prevents race condition of writing to the same boolean.

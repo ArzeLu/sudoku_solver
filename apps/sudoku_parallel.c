@@ -14,7 +14,7 @@
 
 ///TODO: consider dynamic padding
 ///TODO: see if i can get rid of "check_complete" for a faster solution
-///TODO: consider using csp every time there's a single candidate cell
+///TODO: consider using propagation every time there's a single candidate cell
 ///TODO: only divide up the nodes that have no values
 
 #include "libs.h"
@@ -33,10 +33,11 @@ static const int box_cell[N][N] = BOX_TRAVERSAL;
 /// @brief Readjust the number of remaining possible candidates for all cells.
 ///        Assign the cell with a value if there's only one remaining.
 ///        At the end, keeps filling the single-candidate cells and stop if none found.
+///        Broad propagation for the whole board, used before backtracking.
 /// @param board 
 /// @param parallelize 
 /// @return 
-bool constraint_propagation(Board *board, bool parallelize){
+bool constraint_propagation_all(Board *board){
     #pragma omp parallel if(parallelize)
     {
         uint16_t row_mask[N];
@@ -58,18 +59,12 @@ bool constraint_propagation(Board *board, bool parallelize){
 
             uint16_t mask = row_mask[row[i]] & col_mask[col[i]] & box_mask[box[i]];
 
-            if(!parallelize){                  // Need to consider cell records if serialized, signaling backtrack stage.
-                if(cell->candidates != mask){  // Only add a record if candidates changed.
-
-                }
-            }
-
             cell->candidates = mask;// update the candidates
             cell->remainder = pop_count(cell->candidates);    // update the remaining count
         }
     }
     
-    return fill_all_singles(board, parallelize);
+    return fill_all_singles(board);
 }
 
 /// @brief Check if the cell value produces a dead end.
@@ -103,9 +98,11 @@ bool backtrack(Board *board){
     Record *current = board->record;
     uint16_t candidates = board->cells[index].candidates;
 
-    if(board->cells[index].remainder == 1){          // Go the CSP route if one candidate remains.
-        fill_single(board, index);
-        while(constraint_propagation(board, false));
+    if(board->cells[index].remainder == 1){          // Go the propagation route if one candidate remains.
+        fill_single(board, index);                   // Fill up the single-candidate cell,
+
+        while(constraint_propagation(board, false)); // then update the candidate masks and check for more singles.
+
         if(backtrack(board))
             return true;
     }else{                                           // Otherwise, try all candidates.
@@ -115,8 +112,10 @@ bool backtrack(Board *board){
             
             if(forward_check(board, index)){
                 update_neighbors(board, index);
+
                 if(backtrack(board))
                     return true;
+
                 restore_neighbors(board, index, value);
             }
             candidates ^= (1 << value);
@@ -132,8 +131,8 @@ bool backtrack(Board *board){
 /// @brief Solve by parallelizing the top level. 
 ///        Start backtracking thread portion.
 /// @param board 
-void solve(Board *board){
-    while(constraint_propagation(board, true));            // Repeat CSP if a cell was filled. Refer to CSP function comments.
+void solve_parallel(Board *board){
+    while(constraint_propagation_all(board));            // Repeat propagation if a cell was filled.
 
     #pragma omp parallel
     {
@@ -162,30 +161,4 @@ void solve(Board *board){
         free_record(&copy.record);
         free(&copy);
     }
-}
-
-/// @brief Take in two arguments: 
-///        number of threads, and the board in 1D array form. Zero for empty cell.
-/// @param argc 
-/// @param argv 
-/// @return 
-int main(int argc, char *argv[]){
-    int threads = 1;
-    Board board;
-
-    if(argc > 1){
-        threads = atoi(argv[1]);
-    }
-    if(argc > 2){
-        if(strlen(argv[2]) == NUM_CELLS){
-            populate(&board, argv[2]);
-        }else{
-            printf("\nERROR!! not exactly 81 inputs!\n");
-        }
-    }
-
-    omp_set_num_threads(threads);
-
-    solve(&board);
-    print_board(&board);
 }
