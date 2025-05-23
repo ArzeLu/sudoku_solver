@@ -35,7 +35,9 @@ bool constraint_propagation_all(Board *board){
 
             Cell *cell = &board->cells[i];
 
-            cell->candidates = row_mask[row[i]] & col_mask[col[i]] & box_mask[box[i]];
+            cell->candidates = row_mask[row[i]];
+            cell->candidates &= col_mask[col[i]];
+            cell->candidates &= box_mask[box[i]];
             cell->remainder = pop_count(cell->candidates);
         }
     }
