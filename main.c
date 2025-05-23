@@ -17,9 +17,9 @@
 ///TODO: consider using propagation every time there's a single candidate cell
 ///TODO: only divide up the nodes that have no values
 
-#include "board.h"
-#include "helper.h"
+#include "parallel_helper.h"
 #include "sudoku_parallel.h"
+#include "board.h"
 
 /// @brief Take in two arguments: 
 ///        number of threads, and the board in 1D array form. Zero for empty cell.
@@ -43,6 +43,6 @@ int main(int argc, char *argv[]){
 
     omp_set_num_threads(threads);
 
-    solve(&board);
+    solve_parallel(&board);
     print_board(&board);
 }

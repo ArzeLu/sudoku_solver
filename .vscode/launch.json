@@ -1,27 +1,37 @@
 {
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
         {
-            "name": "Debug C Program",
+            "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/sudoku",         // or change to your actual binary
-            "args": ["2", "560000470409360501308510200045090010032751000100002307010905700007130046004000000"],
+            "program": "${workspaceFolder}\\main.exe",
+            "args": [
+                "1",
+                "560000470409360501308510200045090010032751000100002307010905700007130046004000000"
+            ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${fileDirname}",
             "environment": [],
-            "externalConsole": true,
-            "MIMode": "gdb",                               // use "lldb" if you're on macOS
-            "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe",              // change if your gdb is elsewhere
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe",
             "setupCommands": [
                 {
-                    "description": "Enable pretty printing",
+                    "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
                 }
-            ],
-            "preLaunchTask": "build"                        // optional, triggers auto-build
+            ]
         }
+
     ]
 }

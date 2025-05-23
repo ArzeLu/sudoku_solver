@@ -3,9 +3,9 @@
 
 #include "board.h"
 
-void solve_parallel(Board *board);
-bool backtrack(Board *board);
-bool forward_check(Board *board, int index);
 bool constraint_propagation_all(Board *board);
+bool forward_check(Board *board, int index);
+bool backtrack(Board *board);
+void solve_parallel(Board *board);
 
 #endif

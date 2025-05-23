@@ -11,20 +11,20 @@ typedef struct Cell{
 } Cell;
 
 typedef struct Entry{        // Individual cell changes.
+    uint16_t candidates;
     int index;
-    Cell cell;
     struct Entry *next;
 } Entry;
 
 typedef struct Record{       // A record of all cell changes.
     bool written[NUM_CELLS];
-    Entry entries;
+    Entry *entries;
     struct Record *next;
 } Record;
 
 typedef struct Board{
     Cell cells[NUM_CELLS];
-    Record *record;
+    Record *records;
 } Board;
 
 #endif

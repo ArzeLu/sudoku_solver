@@ -4,12 +4,12 @@
 #include "board.h"
 
 Record* generate_dummy();
-void record_cell(Board *board, int index);
-void update_neighbor(Board *board, int index, int value);
+void add_entry(Board *board, int index);
+void add_record(Board *board);
+void free_entry(Entry *entry);
+void free_record(Record *record);
 void update_neighbors(Board *board, int index);
-void restore_neighbor(Board *board, int index);
-void restore_neighbors(Board *board, int index);
-void undo(Board *board);
-void free_record(Record **record);
+void revert_neighbors(Board *board);
+void rollback(Board *board, int valuee);
 
 #endif
