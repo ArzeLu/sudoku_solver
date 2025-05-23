@@ -21,26 +21,22 @@ static const int box_cell[N][N] = BOX_TRAVERSAL;
  * @return 
  */
 bool constraint_propagation_all(Board *board){
+    uint16_t row_mask[N];
+    uint16_t col_mask[N];
+    uint16_t box_mask[N];
+    
     #pragma omp parallel
     {
-        uint16_t row_mask[N];
-        uint16_t col_mask[N];
-        uint16_t box_mask[N];
-
         get_regional_masks(board, row_mask, col_mask, box_mask);
         
         #pragma omp for schedule(static)
         for(int i = 0; i < NUM_CELLS; i++){
-            if(board->cells[i].value != 0) continue;                    // No need to update already populated cells.
+            if(board->cells[i].value != 0) continue;
 
             Cell *cell = &board->cells[i];
 
-            int r = row[i];
-            int c = col[i];
-            int b = box[i];
-
-            cell->candidates = row_mask[r] & col_mask[c] & box_mask[b]; // Update the candidates.
-            cell->remainder = pop_count(cell->candidates);              // Update the remaining count.
+            cell->candidates = row_mask[row[i]] & col_mask[col[i]] & box_mask[box[i]];
+            cell->remainder = pop_count(cell->candidates);
         }
     }
     
@@ -126,6 +122,5 @@ void solve_parallel(Board *board){
                 }
             }
         }
-        free_record(copy.records);
     }
 }

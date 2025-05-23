@@ -122,8 +122,11 @@ int pop_count(uint16_t mask){
 void fill_single(Board *board, int index){
     Cell *cell = &board->cells[index];
 
-    if(cell->remainder != 1)
+    if(cell->remainder > 1)
         fprintf(stderr, "error 1 in fill_single"), exit(EXIT_FAILURE);
+
+    if(cell->remainder < 1)
+        fprintf(stderr, "error 2 in fill_single"), exit(EXIT_FAILURE);
 
     cell->value = bit_position(cell->candidates);
     cell->candidates = 0;
@@ -140,7 +143,7 @@ void fill_single(Board *board, int index){
 bool fill_all_singles(Board *board){
     bool filled = false;
 
-    /// The clause "reduction(|:filled) prevents race condition of writing to the same boolean.
+    /// The clause "reduction(|:filled)" prevents race condition of writing to the same boolean.
     #pragma omp parallel for schedule(static) reduction(|:filled)
     for(int i = 0; i < NUM_CELLS; i++){
         if(board->cells[i].remainder == 1){
@@ -149,6 +152,9 @@ bool fill_all_singles(Board *board){
         }
     }
     
+    printf("\nAfter each constraint propagation:\n");
+    print_board(board);
+
     return filled;
 }
 
@@ -256,8 +262,8 @@ void get_col_masks(Board *board, uint16_t col_mask[]){
     for(int i = 0; i < N; i++){
         col_mask[i] = INITIAL_MASK;
         for(int j = 0; j < N; j++){
-            int r_index = row_cell[i][j];
-            col_mask[i] &= ~(1 << board->cells[r_index].value);
+            int c_index = col_cell[i][j];
+            col_mask[i] &= ~(1 << board->cells[c_index].value);
         }
     }
 }
@@ -267,8 +273,9 @@ void get_box_masks(Board *board, uint16_t box_mask[]){
     for(int i = 0; i < N; i++){
         box_mask[i] = INITIAL_MASK;
         for(int j = 0; j < N; j++){
-            int r_index = row_cell[i][j];
-            box_mask[i] &= ~(1 << board->cells[r_index].value);
+            int b_index = box_cell[i][j];
+            int value = board->cells[b_index].value;
+            box_mask[i] &= ~(1 << value);
         }
     }
 }

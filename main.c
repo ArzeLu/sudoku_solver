@@ -27,6 +27,7 @@
 /// @param argv 
 /// @return 
 int main(int argc, char *argv[]){
+    printf("Program Starts\n");
     int threads = 1;
     Board board;
 
@@ -43,6 +44,12 @@ int main(int argc, char *argv[]){
 
     omp_set_num_threads(threads);
 
-    solve_parallel(&board);
+    printf("Input Board:\n");
     print_board(&board);
+
+    solve_parallel(&board);
+
+    printf("Solved Board:\n");
+    print_board(&board);
+    getchar(); getchar();
 }
