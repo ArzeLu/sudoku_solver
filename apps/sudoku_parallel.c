@@ -34,7 +34,6 @@ bool constraint_propagation_all(Board *board){
             if(board->cells[i].value != 0) continue;
 
             Cell *cell = &board->cells[i];
-
             cell->candidates = row_mask[row[i]];
             cell->candidates &= col_mask[col[i]];
             cell->candidates &= box_mask[box[i]];

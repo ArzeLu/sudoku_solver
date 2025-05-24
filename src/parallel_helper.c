@@ -151,10 +151,6 @@ bool fill_all_singles(Board *board){
             filled = true;
         }
     }
-    
-    printf("\nAfter each constraint propagation:\n");
-    print_board(board);
-
     return filled;
 }
 
