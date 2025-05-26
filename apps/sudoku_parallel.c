@@ -11,6 +11,8 @@ static const int row_cell[N][N] = ROW_TRAVERSAL;
 static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
 
+bool solved = false;
+
 /**
  * @brief Readjust the number of remaining possible candidates for all cells.
  *        Assign the cell with a value if there's only one remaining.
@@ -41,6 +43,7 @@ bool constraint_propagation_all(Board *board){
         }
     }
     
+    board->propagations++;
     return fill_all_singles(board);
 }
 
@@ -66,18 +69,23 @@ bool forward_check(Board *board, int index){
  * @return 
  */
 bool backtrack(Board *board, int index){
+    if(solved)
+        return false;
+
     if(index == -1)
         return true;
+
+    board->total_layers++;
+    board->solution_layers++;
     
     add_record(board);         // Start a record for this recursion.
     add_entry(board, index);   // Add the mrv cell in the record.
 
     uint16_t candidates = board->cells[index].candidates;
-    int original_value = board->cells[index].value;
 
     while(candidates){
         int value = bit_position(candidates);
-        edit_cell(board, index, value);
+        edit_cell(board, index, value, candidates);
         
         if(forward_check(board, index)){
             update_neighbors(board, index);
@@ -85,12 +93,13 @@ bool backtrack(Board *board, int index){
             if(backtrack(board, find_mrv_cell(board)))
                 return true;
 
-            revert_neighbors(board);
+            reset_board(board);
         }
         candidates ^= (1 << value);
     }
 
-    rollback(board, original_value);
+    board->solution_layers--;
+    rollback(board);
     return false;
 }
 
@@ -99,8 +108,17 @@ bool backtrack(Board *board, int index){
  *        Start backtracking thread portion.
  * @param board 
  */
-void solve_parallel(Board *board){
+Stats solve_parallel(Board *board){
     while(constraint_propagation_all(board));        // Repeat propagation if a cell was filled.
+
+    Stats stats;
+    stats.propagations = -1;
+    stats.runtime = -1;
+    stats.solution_layers = -1;
+    stats.solver_id = -1;
+    stats.total_layers = -1;
+
+    double start_time = omp_get_wtime();
 
     #pragma omp parallel
     {
@@ -110,18 +128,34 @@ void solve_parallel(Board *board){
         int portion = floor(NUM_CELLS / threads);
         int start = id * portion;
         int end = (id + 1 == threads) ? NUM_CELLS : start + portion;
-
+        
         Board copy;
-        copy_board(board, &copy);                      // Each thread gets its own copy of the board.
+        copy_board(board, &copy);                    // Each thread gets its own copy of the board.
 
         for(int i = start; i < end; i++){
             if(copy.cells[i].value != 0) continue;   // Only start with empty cells.
-            if(backtrack(&copy, i)){                        // Only true if the board is solved.
+            if(backtrack(&copy, i)){                 // Only true if the board is solved. 
                 #pragma omp critical
                 {
-                    copy_board(&copy, board);         // Copy the board back to the shared memory for main.
-                }
+                    solved = true;
+                    stats.solver_id = id;
+                }  
             }
         }
+
+        /// Write in the stats before the termination of this parallel block
+        if(id == stats.solver_id){
+            stats.solution_layers = copy.solution_layers;
+            copy_board(&copy, board);
+        }
+        #pragma omp atomic
+        stats.total_layers += copy.total_layers;
     }
+
+    double end_time = omp_get_wtime();
+    
+    stats.runtime = end_time - start_time;
+    stats.propagations = board->propagations;
+
+    return stats;
 }

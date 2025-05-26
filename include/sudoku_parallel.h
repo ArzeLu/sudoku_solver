@@ -6,6 +6,6 @@
 bool constraint_propagation_all(Board *board);
 bool forward_check(Board *board, int index);
 bool backtrack(Board *board);
-void solve_parallel(Board *board);
+Stats solve_parallel(Board *board);
 
 #endif

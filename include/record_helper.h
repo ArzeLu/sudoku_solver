@@ -9,7 +9,7 @@ void add_record(Board *board);
 void free_entry(Entry *entry);
 void free_record(Record *record);
 void update_neighbors(Board *board, int index);
-void revert_neighbors(Board *board);
-void rollback(Board *board, int valuee);
+void reset_board(Board *board);
+void rollback(Board *board);
 
 #endif

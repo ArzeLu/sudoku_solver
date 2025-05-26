@@ -18,9 +18,6 @@ static const int box_cell[N][N] = BOX_TRAVERSAL;
 void add_entry(Board *board, int index){
     if(board->records == NULL)
         fprintf(stderr, "error 1 in add_entry"), exit(EXIT_FAILURE);
-
-    if(board->records->written[index])
-        return;
     
     Record *record = board->records;
     Entry *new_entry = malloc(sizeof(Entry));
@@ -28,7 +25,6 @@ void add_entry(Board *board, int index){
     if(!new_entry)
         fprintf(stderr, "error 2 in add_entry"), exit(EXIT_FAILURE);
 
-    record->written[index] = true;
     new_entry->index = index;
     new_entry->candidates = board->cells[index].candidates;
 
@@ -44,8 +40,10 @@ void add_entry(Board *board, int index){
 void add_record(Board *board){
     Record *new_record = malloc(sizeof(Record));
 
+    if(!new_record)
+        fprintf(stderr, "error 1 in add_record"), exit(EXIT_FAILURE);
+
     new_record->entries = NULL;
-    memset(new_record->written, 0, sizeof(new_record->written));
 
     if(board->records == NULL){
         new_record->next = NULL;
@@ -54,16 +52,6 @@ void add_record(Board *board){
         new_record->next = board->records;
         board->records = new_record;
     }
-}
-
-void free_entry(Entry *entry){
-    entry->next = NULL;
-    free(entry);
-}
-
-void free_record(Record *record){    
-    record->next = NULL;
-    free(record);
 }
 
 /**
@@ -107,31 +95,35 @@ void update_neighbors(Board *board, int index){
     }
 }
 
-void revert_neighbors(Board *board){    
-    Entry *entry = board->records->entries;
+void reset_board(Board *board){    
+    Entry **entry = &board->records->entries;
     
-    while(entry->next != NULL){
-        board->cells[entry->index].candidates = entry->candidates;
-        board->cells[entry->index].remainder = pop_count(entry->candidates);
+    while((*entry)->next != NULL){
+        int index = (*entry)->index;
+        Cell *cell = &board->cells[index];
 
-        Entry *old = entry;
-        entry = entry->next;
-        free_entry(old);
+        cell->value = 0;
+        cell->candidates = (*entry)->candidates;
+        cell->remainder = pop_count((*entry)->candidates);
+
+        Entry *old = *entry;
+        *entry = (*entry)->next;
+        free(old);
     }
 }
 
-void rollback(Board *board, int value){
-    Entry *entry = board->records->entries;
-    Cell *cell = &board->cells[entry->index];
+void rollback(Board *board){
+    Entry **entry = &board->records->entries;
+    Cell *cell = &board->cells[(*entry)->index];
 
     /// Restore MRV cell in backtrack stage to its original state.
-    cell->value = value;
-    cell->candidates = entry->candidates;
-    cell->remainder = pop_count(entry->candidates);
+    cell->candidates = (*entry)->candidates;
+    cell->remainder = pop_count((*entry)->candidates);
 
-    free_entry(entry);
+    free(*entry);
+    board->records->entries = NULL;
 
     Record *old = board->records;
     board->records = board->records->next;
-    free_record(old);
+    free(old);
 }

@@ -27,7 +27,7 @@
 /// @param argv 
 /// @return 
 int main(int argc, char *argv[]){
-    printf("Program Starts\n");
+    printf("Program Starts\n\n");
     int threads = 1;
     Board board;
 
@@ -47,9 +47,19 @@ int main(int argc, char *argv[]){
     printf("Input Board:\n");
     print_board(&board);
 
-    solve_parallel(&board);
+    printf("Solving...\n\n");
+    Stats stats = solve_parallel(&board);
 
     printf("Solved Board:\n");
     print_board(&board);
+
+    printf("\nStats:\n");
+    printf("The thread that solved the board: %d\n", stats.solver_id);
+    printf("Number of backtrack layers on the correct path: %d\n", stats.solution_layers);
+    printf("Runtime: %f\n", stats.runtime);
+    printf("Constraint Propagations taken: %d\n", stats.propagations);
+    printf("Total number of backtrack layers explored: %d\n", stats.total_layers);
+
+    printf("\nEnter any key to close.\n");
     getchar(); getchar();
 }

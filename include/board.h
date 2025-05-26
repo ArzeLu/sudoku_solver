@@ -17,14 +17,24 @@ typedef struct Entry{        // Individual cell changes.
 } Entry;
 
 typedef struct Record{       // A record of all cell changes.
-    bool written[NUM_CELLS];
     Entry *entries;
     struct Record *next;
 } Record;
 
 typedef struct Board{
+    int propagations;
+    int total_layers;
+    int solution_layers;
     Cell cells[NUM_CELLS];
     Record *records;
 } Board;
+
+typedef struct Stats{
+    int solver_id;
+    int solution_layers;
+    int total_layers;
+    int propagations;
+    double runtime;
+} Stats;
 
 #endif

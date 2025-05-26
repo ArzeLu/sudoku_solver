@@ -55,6 +55,9 @@ void populate(Board *board, char input[]){
                 cell->remainder = 9;
             }
     }
+    board->propagations = 0;
+    board->total_layers = 0;
+    board->solution_layers = 0;
     board->records = NULL;
 }
 
@@ -72,6 +75,9 @@ void copy_board(Board *original, Board *copy){
         new_cell->remainder = old_cell->remainder;
         new_cell->value = old_cell->value;
     }
+    copy->propagations = original->propagations;
+    copy->total_layers = original->total_layers;
+    copy->solution_layers = original->solution_layers;
     copy->records = NULL;
 }
 
@@ -160,18 +166,18 @@ bool fill_all_singles(Board *board){
  * @param index 
  * @param value 
  */
-void edit_cell(Board *board, int index, int value){
+void edit_cell(Board *board, int index, int value, uint16_t candidates){
     Cell *cell = &board->cells[index];
 
-    if(!(cell->candidates & (1 << value))) // Cell value isn't available in its candidates
+    if(!(candidates & (1 << value))) // Cell value isn't available in its candidates
         fprintf(stderr, "error 1 in update_cell"), exit(EXIT_FAILURE);
 
-    if(cell->remainder <= 0)
+    if(pop_count(candidates) <= 0)
         fprintf(stderr, "error 2 in update_cell"), exit(EXIT_FAILURE);
 
     cell->value = value;
-    cell->candidates ^= (1 << value);
-    cell->remainder -= 1;
+    cell->candidates = 0;
+    cell->remainder = 0;
 }
 
 /**
