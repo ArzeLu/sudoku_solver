@@ -1,12 +1,14 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define n 3
+#define n 3                // The dimensions of the little 3 by 3 boxes
 #define N 9
 #define NUM_CELLS 81
-#define INITIAL_MASK 0x3FE // flip the bits in the right hand side from 1 to 9. 0000001111111110
+#define INITIAL_MASK 0x3FE // Flip the bits in the right hand side from 1 to 9. 0000001111111110
 
-#define ROW_POSITION { \
+/// Convenience for finding the correct row given a cell index.
+/// e.g. index is 31, then it's on the 3rd row.
+#define ROW_POSITION { \          
     0, 0, 0, 0, 0, 0, 0, 0, 0, \
     1, 1, 1, 1, 1, 1, 1, 1, 1, \
     2, 2, 2, 2, 2, 2, 2, 2, 2, \
@@ -18,6 +20,8 @@
     8, 8, 8, 8, 8, 8, 8, 8, 8  \
 }
 
+/// Convenience for finding the correct column given a cell index.
+/// e.g. index is 31, then it's on the 4th column.
 #define COL_POSITION { \
     0, 1, 2, 3, 4, 5, 6, 7, 8, \
     0, 1, 2, 3, 4, 5, 6, 7, 8, \
@@ -30,6 +34,8 @@
     0, 1, 2, 3, 4, 5, 6, 7, 8  \
 }
 
+/// Convenience for finding the correct box given a cell index.
+/// e.g. index is 31, then it's in the 4th box.
 #define BOX_POSITION { \
     0, 0, 0, 1, 1, 1, 2, 2, 2, \
     0, 0, 0, 1, 1, 1, 2, 2, 2, \
@@ -42,6 +48,7 @@
     6, 6, 6, 7, 7, 7, 8, 8, 8  \
 }
 
+/// The sequential order of indices along the rows.
 #define ROW_TRAVERSAL { \
     {0,  1,  2,  3,  4,  5,  6,  7,  8 }, \
     {9, 10, 11, 12, 13, 14, 15, 16, 17 }, \
@@ -54,6 +61,7 @@
     {72, 73, 74, 75, 76, 77, 78, 79, 80}  \
 }
 
+/// The sequential order of indices along the columns.
 #define COL_TRAVERSAL { \
     {0,  9, 18, 27, 36, 45, 54, 63, 72 }, \
     {1, 10, 19, 28, 37, 46, 55, 64, 73 }, \
@@ -66,6 +74,9 @@
     {8, 17, 26, 35, 44, 53, 62, 71, 80 }  \
 }
 
+/// The sequential order of indices in the boxes.
+/// The indices go from left to right,
+/// then top to bottom.
 #define BOX_TRAVERSAL { \
     {0,  1,  2,  9,  10, 11, 18, 19, 20}, \
     {3,  4,  5,  12, 13, 14, 21, 22, 23}, \

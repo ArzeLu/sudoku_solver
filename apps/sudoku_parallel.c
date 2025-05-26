@@ -14,10 +14,9 @@ static const int box_cell[N][N] = BOX_TRAVERSAL;
 bool solved = false;
 
 /**
- * @brief Readjust the number of remaining possible candidates for all cells.
- *        Assign the cell with a value if there's only one remaining.
- *        At the end, keeps filling the single-candidate cells and stop if none found.
- *        Broad propagation for the whole board, used before backtracking.
+ * @brief Readjust the number of possible candidates for all cells.
+ *        If a cell is found with one candidate left,
+ *        assign the value to it.
  * @param board 
  * @param parallelize 
  * @return 
@@ -57,13 +56,14 @@ bool constraint_propagation_all(Board *board){
 * @return boolean, if the new cell value is valid.
 */
 bool forward_check(Board *board, int index){
-    return scan_neighbors(board, index); // Check neighbor validity
+    return scan_neighbors(board, index);
 }
 
 /**
  * @brief Find solution by guessing.
- *         Recursively try each candidate of each cell.
- *         Retreat a level if all candidates failed.
+ *        Recursively try each candidate of each cell.
+ *        Combined with MRV, forward checking, and
+ *        local constraint propagation.
  * @param board 
  * @param visited 
  * @return 
@@ -93,7 +93,7 @@ bool backtrack(Board *board, int index){
             if(backtrack(board, find_mrv_cell(board)))
                 return true;
 
-            reset_board(board);
+            reset_neighbors(board);
         }
         candidates ^= (1 << value);
     }
@@ -105,7 +105,7 @@ bool backtrack(Board *board, int index){
 
 /**
  * @brief Solve by parallelizing the top level. 
- *        Start backtracking thread portion.
+ *        Each thread backtracks a portion of available paths.
  * @param board 
  */
 Stats solve_parallel(Board *board){

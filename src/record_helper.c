@@ -10,20 +10,19 @@ static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
 
 /**
- * @brief Given the board and the index, make a record
- *        of the cell and add it to the linked list in the board.
+ * @brief Add a new record entry of a cell to the board.
  * @param board 
  * @param index 
  */
 void add_entry(Board *board, int index){
-    if(board->records == NULL)
-        fprintf(stderr, "error 1 in add_entry"), exit(EXIT_FAILURE);
+    // if(board->records == NULL)
+    //     fprintf(stderr, "error 1 in add_entry"), exit(EXIT_FAILURE);
     
     Record *record = board->records;
     Entry *new_entry = malloc(sizeof(Entry));
 
-    if(!new_entry)
-        fprintf(stderr, "error 2 in add_entry"), exit(EXIT_FAILURE);
+    // if(!new_entry)
+    //     fprintf(stderr, "error 2 in add_entry"), exit(EXIT_FAILURE);
 
     new_entry->index = index;
     new_entry->candidates = board->cells[index].candidates;
@@ -37,11 +36,15 @@ void add_entry(Board *board, int index){
     }    
 }
 
+/**
+ * @brief Add a new blank record to the board.
+ * @param board 
+ */
 void add_record(Board *board){
     Record *new_record = malloc(sizeof(Record));
 
-    if(!new_record)
-        fprintf(stderr, "error 1 in add_record"), exit(EXIT_FAILURE);
+    // if(!new_record)
+    //     fprintf(stderr, "error 1 in add_record"), exit(EXIT_FAILURE);
 
     new_record->entries = NULL;
 
@@ -75,8 +78,9 @@ void update_neighbor(Board *board, int index, uint16_t mask){
 }
 
 /**
- * @brief Given a target index, update the candidates of the neighbors on the target's new value.
- *        Also acts as local region constraint propagation.
+ * @brief Given a target cell,
+ *        update the candidates of the neighbors accordingly.
+ *        This also acts as local constraint propagation.
  * @param board 
  * @param index 
  */
@@ -95,7 +99,12 @@ void update_neighbors(Board *board, int index){
     }
 }
 
-void reset_board(Board *board){    
+/**
+ * @brief Undo the updates of the neighbors in the backtrack layers,
+ *        except for the last cell.
+ * @param board 
+ */
+void reset_neighbors(Board *board){    
     Entry **entry = &board->records->entries;
     
     while((*entry)->next != NULL){
@@ -112,6 +121,11 @@ void reset_board(Board *board){
     }
 }
 
+/**
+ * @brief Undo all the changes of a backtack stage.
+ *        Used when an entire backtrack layer fails.
+ * @param board 
+ */
 void rollback(Board *board){
     Entry **entry = &board->records->entries;
     Cell *cell = &board->cells[(*entry)->index];

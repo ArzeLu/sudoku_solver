@@ -3,7 +3,6 @@
 
 #include "board.h"
 
-bool check_complete(Board *board);
 void print_board(Board *board);
 void populate(Board *board, char input[]);
 void copy_board(Board *original, Board *copy);

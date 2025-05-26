@@ -11,17 +11,9 @@ static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
 
 /**
- * @brief See if the board is solved.
- * @param board 
- * @return 
+ * @brief Print the board with formatting
+ * @param board
  */
-bool check_complete(Board *board){
-    for(int i = 0; i < NUM_CELLS; i++){
-        if(board->cells[i].value == 0) return false;
-    }
-    return true;
-}
-
 void print_board(Board *board){
     int counter = 0;
     for(int i = 0; i < NUM_CELLS; i++){
@@ -37,6 +29,7 @@ void print_board(Board *board){
 
 /**
  * @brief Populate the board with given inputs.
+ *        Give all struct fields initial values.
  * @param board 
  * @param input 
  */
@@ -62,7 +55,7 @@ void populate(Board *board, char input[]){
 }
 
 /**
- * @brief Deep copy a board.
+ * @brief Deep copy a board, except for the records.
  * @param original 
  * @param copy 
  */
@@ -89,8 +82,8 @@ void copy_board(Board *original, Board *copy){
 int bit_position(uint16_t mask){
     int value = 0;
 
-    if(mask == 0)
-        fprintf(stderr, "error 1 in bit_position"), exit(EXIT_FAILURE);
+    // if(mask == 0)
+    //     fprintf(stderr, "error 1 in bit_position"), exit(EXIT_FAILURE);
 
     while(!(mask & 1)){
         mask >>= 1;     // Shifts to the right.
@@ -113,14 +106,14 @@ int pop_count(uint16_t mask){
         count++;
     }
 
-    if(count > N)
-        fprintf(stderr, "Error 1 in pop_count"), exit(EXIT_FAILURE);
+    // if(count > N)
+    //     fprintf(stderr, "Error 1 in pop_count"), exit(EXIT_FAILURE);
 
     return count;
 }
 
 /**
- * @brief Given the index of a single-candidate cell, fill it.
+ * @brief Fill the single-candidate target cell.
  * @param board 
  * @param index 
  * @return 
@@ -128,11 +121,11 @@ int pop_count(uint16_t mask){
 void fill_single(Board *board, int index){
     Cell *cell = &board->cells[index];
 
-    if(cell->remainder > 1)
-        fprintf(stderr, "error 1 in fill_single"), exit(EXIT_FAILURE);
+    // if(cell->remainder > 1)
+    //     fprintf(stderr, "error 1 in fill_single"), exit(EXIT_FAILURE);
 
-    if(cell->remainder < 1)
-        fprintf(stderr, "error 2 in fill_single"), exit(EXIT_FAILURE);
+    // if(cell->remainder < 1)
+    //     fprintf(stderr, "error 2 in fill_single"), exit(EXIT_FAILURE);
 
     cell->value = bit_position(cell->candidates);
     cell->candidates = 0;
@@ -140,10 +133,9 @@ void fill_single(Board *board, int index){
 }
 
 /**
- * @brief Fill any block in the board that has just one remaining candidate.
+ * @brief Fill any single-candidate cell on the board.
  *        Return true if a value was filled.
- * @param board 
- * @param parallel 
+ * @param board
  * @return 
  */
 bool fill_all_singles(Board *board){
@@ -161,19 +153,21 @@ bool fill_all_singles(Board *board){
 }
 
 /**
- * @brief Edit a target cell given its index and a new value.
+ * @brief Assign a new value to a cell.
+ *        Assign zero to its candidates and remainder.
  * @param board 
  * @param index 
  * @param value 
+ * @param candidates
  */
 void edit_cell(Board *board, int index, int value, uint16_t candidates){
     Cell *cell = &board->cells[index];
 
-    if(!(candidates & (1 << value))) // Cell value isn't available in its candidates
-        fprintf(stderr, "error 1 in update_cell"), exit(EXIT_FAILURE);
+    // if(!(candidates & (1 << value)))
+    //     fprintf(stderr, "error 1 in update_cell"), exit(EXIT_FAILURE);
 
-    if(pop_count(candidates) <= 0)
-        fprintf(stderr, "error 2 in update_cell"), exit(EXIT_FAILURE);
+    // if(pop_count(candidates) <= 0)
+    //     fprintf(stderr, "error 2 in update_cell"), exit(EXIT_FAILURE);
 
     cell->value = value;
     cell->candidates = 0;
@@ -201,6 +195,14 @@ int find_mrv_cell(Board *board){
     return index;
 }
 
+/**
+ * @brief See if the neighbor has a certain value,
+ *        given by a mask.
+ *        This function is exclusively created for scan_neighbors.
+ * @param board
+ * @param neighbor_index
+ * @param mask
+ */
 bool scan_neighbor(Board *board, int neighbor_index, uint16_t mask){
     Cell *neighbor = &board->cells[neighbor_index];
 
@@ -213,24 +215,23 @@ bool scan_neighbor(Board *board, int neighbor_index, uint16_t mask){
 }
 
 /**
- * @brief Given the index of the board,
- *        see if the cell creates a dead end in its neighboring region.
+ * @brief See if a cell value creates a dead end
+ *        for its neighbors.
  *        (row, column, and box).
  *        Returns true if it's safe.
  * @param board 
  * @param index 
- * @param value 
  * @return 
  */
 bool scan_neighbors(Board *board, int index){
     int value = board->cells[index].value;
     uint16_t mask = (1 << value);
 
-    if(value == 0)
-        fprintf(stderr, "Error 1 in scan_neighbors"), exit(EXIT_FAILURE);
+    // if(value == 0)
+    //     fprintf(stderr, "Error 1 in scan_neighbors"), exit(EXIT_FAILURE);
 
-    if(value > N || value < 0)
-        fprintf(stderr, "Error 2 in scan_neighbors"), exit(EXIT_FAILURE);
+    // if(value > N || value < 0)
+    //     fprintf(stderr, "Error 2 in scan_neighbors"), exit(EXIT_FAILURE);
     
     for(int i = 0; i < N; i++){
         int r_index = row_cell[row[index]][i];  // Index of a cell in the neighboring row
@@ -245,6 +246,11 @@ bool scan_neighbors(Board *board, int index){
     return true;
 }
 
+/**
+ * @brief Get all candidate masks for all rows.
+ * @param board
+ * @param row_mask
+ */
 void get_row_masks(Board *board, uint16_t row_mask[]){
     /// When a value in the region is found,
     /// turn the corresponding mask bit to zero.
@@ -259,6 +265,11 @@ void get_row_masks(Board *board, uint16_t row_mask[]){
     }
 }
 
+/**
+ * @brief Get all candidate masks for all columns.
+ * @param board
+ * @param col_mask
+ */
 void get_col_masks(Board *board, uint16_t col_mask[]){
     #pragma omp for schedule(static)
     for(int i = 0; i < N; i++){
@@ -270,6 +281,11 @@ void get_col_masks(Board *board, uint16_t col_mask[]){
     }
 }
 
+/**
+ * @brief Get all candidate masks for all boxes.
+ * @param board
+ * @param box_mask
+ */
 void get_box_masks(Board *board, uint16_t box_mask[]){
     #pragma omp for schedule(static)
     for(int i = 0; i < N; i++){
@@ -282,6 +298,14 @@ void get_box_masks(Board *board, uint16_t box_mask[]){
     }
 }
 
+/**
+ * @brief Get all candidate masks for all regions
+ *        (rows, columns, boxes).
+ * @param board
+ * @param row_mask
+ * @param col_mask
+ * @param box_mask
+ */
 void get_regional_masks(Board *board, uint16_t *row_mask, uint16_t *col_mask, uint16_t *box_mask){
     get_row_masks(board, row_mask);
     get_col_masks(board, col_mask);

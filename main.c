@@ -1,31 +1,12 @@
 /// Arze Lu
 /// https://github.com/ArzeLu/sudoku_solver/
-/// Patent number: 69420
-/// blazinweed.org, all rights reserved
-/// sponsored by Vaperjit
-/// not allowed to distribute or monetize this code
-/// try our flagship cannabis sample today (value at $60)!
-/// interested? visit blazinweed.org/canny/item/highflyer/free-trial
-
-/// strategy:
-/// loop through the cells as a 1D 1 by 81 structure.
-/// parallelize the top level.
-/// only record the original state of the cell when it's first explored by a branch.
-
-///TODO: consider dynamic padding
-///TODO: see if i can get rid of "check_complete" for a faster solution
-///TODO: consider using propagation every time there's a single candidate cell
-///TODO: only divide up the nodes that have no values
 
 #include "parallel_helper.h"
 #include "sudoku_parallel.h"
 #include "board.h"
 
-/// @brief Take in two arguments: 
-///        number of threads, and the board in 1D array form. Zero for empty cell.
-/// @param argc 
-/// @param argv 
-/// @return 
+/// Take in two arguments: 
+/// number of threads, and the board in 1D array form. Zero for empty cell.
 int main(int argc, char *argv[]){
     printf("Program Starts\n\n");
     int threads = 1;

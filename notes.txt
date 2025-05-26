@@ -1,0 +1,6 @@
+strategy:
+    loop through the cells as a 1D 1 by 81 structure.
+    parallelize the top level.
+    only record the original state of the cell when it's first explored by a branch.
+consider dynamic padding
+check for not freed stuff
