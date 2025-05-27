@@ -49,40 +49,23 @@ int pop_count(uint16_t mask){
 }
 
 /**
- * @brief Fill the single-candidate target cell.
- * @param board 
- * @param index 
- * @return 
- */
-void fill_single(Board *board, int index){
-    Cell *cell = &board->cells[index];
-
-    // if(cell->remainder > 1)
-    //     fprintf(stderr, "error 1 in fill_single"), exit(EXIT_FAILURE);
-
-    // if(cell->remainder < 1)
-    //     fprintf(stderr, "error 2 in fill_single"), exit(EXIT_FAILURE);
-
-    cell->value = bit_position(cell->candidates);
-    cell->candidates = 0;
-    cell->remainder = 0;
-}
-
-/**
  * @brief Fill any single-candidate cell on the board.
  *        Return true if a value was filled.
  * @param board
  * @return 
  */
 bool fill_all_singles(Board *board){
-    int filled = 0;
+    bool filled = false;
 
     /// The clause "reduction(|:filled)" prevents race condition of writing to the same boolean.
     #pragma omp parallel for schedule(static) reduction(|:filled)
     for(int i = 0; i < NUM_CELLS; i++){
-        if(board->cells[i].remainder == 1){
-            fill_single(board, i);
-            filled = 1;
+        Cell *cell = &board->cells[i];
+        if(cell->remainder == 1){
+            cell->value = bit_position(cell->candidates);
+            cell->candidates = 0;
+            cell->remainder = 0;
+            filled = true;
         }
     }
     return filled;
@@ -132,19 +115,6 @@ int find_mrv_cell(Board *board){
 }
 
 /**
- * @brief See if the neighbor has a certain value,
- *        given by a mask.
- *        This function is exclusively created for scan_neighbors.
- * @param board
- * @param neighbor_index
- * @param mask
- */
-bool scan_neighbor(Board *board, int neighbor_index, uint16_t mask){
-    Cell *neighbor = &board->cells[neighbor_index];
-    return (neighbor->candidates ^ mask) || (neighbor->remainder != 1);
-}
-
-/**
  * @brief See if a cell value creates a dead end
  *        for its neighbors.
  *        (row, column, and box).
@@ -167,9 +137,13 @@ bool scan_neighbors(Board *board, int index){
         int c_index = col_cell[col[index]][i];  // Index of a cell in the neighboring col
         int b_index = box_cell[box[index]][i];  // Index of a cell in the neighboring box
 
-        if(!scan_neighbor(board, r_index, mask)) return false;
-        if(!scan_neighbor(board, c_index, mask)) return false;
-        if(!scan_neighbor(board, b_index, mask)) return false;
+        Cell *r_neighbor = &board->cells[r_index];
+        Cell *c_neighbor = &board->cells[c_index];
+        Cell *b_neighbor = &board->cells[b_index];
+
+        if((r_neighbor->candidates & mask) && (r_neighbor->remainder == 1)) return false;
+        if((c_neighbor->candidates & mask) && (c_neighbor->remainder == 1)) return false;
+        if((b_neighbor->candidates & mask) && (b_neighbor->remainder == 1)) return false;
     }
 
     return true;
