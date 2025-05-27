@@ -1,8 +1,9 @@
 #include "libs.h"
-#include "parallel_helper.h"
-#include "record_helper.h"
 #include "board.h"
 #include "constants.h"
+#include "board_helper.h"
+#include "record_helper.h"
+#include "parallel_helper.h"
 
 static const int row[NUM_CELLS] = ROW_POSITION;
 static const int col[NUM_CELLS] = COL_POSITION;
@@ -25,11 +26,11 @@ bool constraint_propagation_all(Board *board){
     uint16_t row_mask[N];
     uint16_t col_mask[N];
     uint16_t box_mask[N];
-    
+
+    get_regional_masks(board, row_mask, col_mask, box_mask);
+
     #pragma omp parallel
     {
-        get_regional_masks(board, row_mask, col_mask, box_mask);
-        
         #pragma omp for schedule(static)
         for(int i = 0; i < NUM_CELLS; i++){
             if(board->cells[i].value != 0) continue;
@@ -139,15 +140,11 @@ Stats solve_parallel(Board *board){
                 {
                     solved = true;
                     stats.solver_id = id;
+                    copy_board(&copy, board);
                 }  
             }
         }
 
-        /// Write in the stats before the termination of this parallel block
-        if(id == stats.solver_id){
-            stats.solution_layers = copy.solution_layers;
-            copy_board(&copy, board);
-        }
         #pragma omp atomic
         stats.total_layers += copy.total_layers;
     }
@@ -156,6 +153,7 @@ Stats solve_parallel(Board *board){
     
     stats.runtime = end_time - start_time;
     stats.propagations = board->propagations;
+    stats.solution_layers = board->solution_layers;
 
     return stats;
 }

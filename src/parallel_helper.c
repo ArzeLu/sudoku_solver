@@ -11,70 +11,6 @@ static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
 
 /**
- * @brief Print the board with formatting
- * @param board
- */
-void print_board(Board *board){
-    int counter = 0;
-    for(int i = 0; i < NUM_CELLS; i++){
-        printf("%d  ", board->cells[i].value);
-        counter++;
-        if(counter == 9){
-            printf("\n");
-            counter = 0;
-        }
-    }
-    printf("\n\n");
-}
-
-/**
- * @brief Populate the board with given inputs.
- *        Give all struct fields initial values.
- * @param board 
- * @param input 
- */
-void populate(Board *board, char input[]){    
-    for(int i = 0; i < NUM_CELLS; i++){
-            Cell *cell = &board->cells[i];
-
-            int value = input[i] - '0'; // Convert char to int.
-            cell->value = value;
-
-            if(value > 0){
-                cell->candidates = 0;
-                cell->remainder = 0;
-            }else{
-                cell->candidates = INITIAL_MASK;
-                cell->remainder = 9;
-            }
-    }
-    board->propagations = 0;
-    board->total_layers = 0;
-    board->solution_layers = 0;
-    board->records = NULL;
-}
-
-/**
- * @brief Deep copy a board, except for the records.
- * @param original 
- * @param copy 
- */
-void copy_board(Board *original, Board *copy){
-    for(int i = 0; i < NUM_CELLS; i++){
-        Cell *new_cell = &copy->cells[i];
-        Cell *old_cell = &original->cells[i];
-
-        new_cell->candidates = old_cell->candidates;
-        new_cell->remainder = old_cell->remainder;
-        new_cell->value = old_cell->value;
-    }
-    copy->propagations = original->propagations;
-    copy->total_layers = original->total_layers;
-    copy->solution_layers = original->solution_layers;
-    copy->records = NULL;
-}
-
-/**
  * @brief Find the position of the right-most flipped bit.
  * @param mask 
  * @return 
@@ -139,14 +75,14 @@ void fill_single(Board *board, int index){
  * @return 
  */
 bool fill_all_singles(Board *board){
-    bool filled = false;
+    int filled = 0;
 
     /// The clause "reduction(|:filled)" prevents race condition of writing to the same boolean.
     #pragma omp parallel for schedule(static) reduction(|:filled)
     for(int i = 0; i < NUM_CELLS; i++){
         if(board->cells[i].remainder == 1){
             fill_single(board, i);
-            filled = true;
+            filled = 1;
         }
     }
     return filled;
@@ -205,13 +141,7 @@ int find_mrv_cell(Board *board){
  */
 bool scan_neighbor(Board *board, int neighbor_index, uint16_t mask){
     Cell *neighbor = &board->cells[neighbor_index];
-
-    if(neighbor->value == 0)
-        if(neighbor->candidates & mask)
-            if(neighbor->remainder == 1)
-                return false;
-            
-    return true;
+    return (neighbor->candidates ^ mask) || (neighbor->remainder != 1);
 }
 
 /**
@@ -229,7 +159,6 @@ bool scan_neighbors(Board *board, int index){
 
     // if(value == 0)
     //     fprintf(stderr, "Error 1 in scan_neighbors"), exit(EXIT_FAILURE);
-
     // if(value > N || value < 0)
     //     fprintf(stderr, "Error 2 in scan_neighbors"), exit(EXIT_FAILURE);
     
@@ -247,67 +176,24 @@ bool scan_neighbors(Board *board, int index){
 }
 
 /**
- * @brief Get all candidate masks for all rows.
- * @param board
- * @param row_mask
- */
-void get_row_masks(Board *board, uint16_t row_mask[]){
-    /// When a value in the region is found,
-    /// turn the corresponding mask bit to zero.
-    /// Output isn't affected if the value is zero.
-    #pragma omp for schedule(static)
-    for(int i = 0; i < N; i++){
-        row_mask[i] = INITIAL_MASK;
-        for(int j = 0; j < N; j++){
-            int r_index = row_cell[i][j];
-            row_mask[i] &= ~(1 << board->cells[r_index].value);
-        }
-    }
-}
-
-/**
- * @brief Get all candidate masks for all columns.
- * @param board
- * @param col_mask
- */
-void get_col_masks(Board *board, uint16_t col_mask[]){
-    #pragma omp for schedule(static)
-    for(int i = 0; i < N; i++){
-        col_mask[i] = INITIAL_MASK;
-        for(int j = 0; j < N; j++){
-            int c_index = col_cell[i][j];
-            col_mask[i] &= ~(1 << board->cells[c_index].value);
-        }
-    }
-}
-
-/**
- * @brief Get all candidate masks for all boxes.
- * @param board
- * @param box_mask
- */
-void get_box_masks(Board *board, uint16_t box_mask[]){
-    #pragma omp for schedule(static)
-    for(int i = 0; i < N; i++){
-        box_mask[i] = INITIAL_MASK;
-        for(int j = 0; j < N; j++){
-            int b_index = box_cell[i][j];
-            int value = board->cells[b_index].value;
-            box_mask[i] &= ~(1 << value);
-        }
-    }
-}
-
-/**
- * @brief Get all candidate masks for all regions
- *        (rows, columns, boxes).
+ * @brief Make masks of each region. (rows, columns, boxes)
  * @param board
  * @param row_mask
  * @param col_mask
  * @param box_mask
  */
 void get_regional_masks(Board *board, uint16_t *row_mask, uint16_t *col_mask, uint16_t *box_mask){
-    get_row_masks(board, row_mask);
-    get_col_masks(board, col_mask);
-    get_box_masks(board, box_mask);
+    for(int i = 0; i < N; i++){
+        row_mask[i] = INITIAL_MASK;
+        col_mask[i] = INITIAL_MASK;
+        box_mask[i] = INITIAL_MASK;
+    }
+
+    for(int i = 0; i < NUM_CELLS; i++){
+        int value = board->cells[i].value;
+
+        row_mask[row[i]] &= ~(1 << value);
+        col_mask[col[i]] &= ~(1 << value);
+        box_mask[box[i]] &= ~(1 << value);
+    }
 }

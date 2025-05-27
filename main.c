@@ -4,6 +4,7 @@
 #include "parallel_helper.h"
 #include "sudoku_parallel.h"
 #include "board.h"
+#include "board_helper.h"
 
 /// Take in two arguments: 
 /// number of threads, and the board in 1D array form. Zero for empty cell.

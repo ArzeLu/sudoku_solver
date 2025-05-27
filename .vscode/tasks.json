@@ -15,7 +15,8 @@
                 "${workspaceFolder}\\main.c",
                 "${workspaceFolder}\\apps\\sudoku_parallel.c",
                 "${workspaceFolder}\\src\\parallel_helper.c",
-                "${workspaceFolder}\\src\\record_helper.c"
+                "${workspaceFolder}\\src\\record_helper.c",
+                "${workspaceFolder}\\src\\board_helper.c"
             ],
             "options": {
                 "cwd": "C:/msys64/mingw64/bin"

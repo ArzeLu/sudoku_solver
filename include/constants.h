@@ -8,7 +8,7 @@
 
 /// Convenience for finding the correct row given a cell index.
 /// e.g. index is 31, then it's on the 3rd row.
-#define ROW_POSITION { \          
+#define ROW_POSITION { \
     0, 0, 0, 0, 0, 0, 0, 0, 0, \
     1, 1, 1, 1, 1, 1, 1, 1, 1, \
     2, 2, 2, 2, 2, 2, 2, 2, 2, \
