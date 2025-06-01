@@ -1,7 +1,7 @@
 #include "libs.h"
-#include "record_helper.h"
-#include "board.h"
 #include "constants.h"
+#include "structures.h"
+#include "record_helper.h"
 
 static const int row[NUM_CELLS] = ROW_POSITION;
 static const int col[NUM_CELLS] = COL_POSITION;
@@ -69,28 +69,6 @@ bool fill_all_singles(Board *board){
         }
     }
     return filled;
-}
-
-/**
- * @brief Assign a new value to a cell.
- *        Assign zero to its candidates and remainder.
- * @param board 
- * @param index 
- * @param value 
- * @param candidates
- */
-void edit_cell(Board *board, int index, int value, uint16_t candidates){
-    Cell *cell = &board->cells[index];
-
-    // if(!(candidates & (1 << value)))
-    //     fprintf(stderr, "error 1 in update_cell"), exit(EXIT_FAILURE);
-
-    // if(pop_count(candidates) <= 0)
-    //     fprintf(stderr, "error 2 in update_cell"), exit(EXIT_FAILURE);
-
-    cell->value = value;
-    cell->candidates = 0;
-    cell->remainder = 0;
 }
 
 /**

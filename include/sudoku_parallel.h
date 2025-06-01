@@ -1,7 +1,7 @@
 #ifndef SUDOKU_PARALLEL_H
 #define SUDOKU_PARALLEL_H
 
-#include "board.h"
+#include "structures.h"
 
 bool constraint_propagation_all(Board *board);
 bool forward_check(Board *board, int index);

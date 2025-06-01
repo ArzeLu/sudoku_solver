@@ -4,6 +4,7 @@
 #define n 3                // The dimensions of the little 3 by 3 boxes
 #define N 9
 #define NUM_CELLS 81
+#define NUM_LOCALS 22 // Number of cells in local regions (row, columns, box)
 #define INITIAL_MASK 0x3FE // Flip the bits in the right hand side from 1 to 9. 0000001111111110
 
 /// Convenience for finding the correct row given a cell index.

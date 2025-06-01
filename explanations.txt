@@ -1,0 +1,7 @@
+Main.c
+    main
+        Take in inputs from inputs.txt, run the solver, then print the results. Straightforward.
+Sudoku_parallel.c
+    bool solved;
+        Global variable representing if the board is done solving. Used by all threads.
+    

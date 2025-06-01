@@ -1,5 +1,10 @@
 {
     "files.associations": {
-        "sudoku_parallel.h": "c"
+        "sudoku_parallel.h": "c",
+        "constants.h": "c",
+        "structures.h": "c",
+        "stdlib.h": "c",
+        "stdbool.h": "c",
+        "stdio.h": "c"
     }
 }

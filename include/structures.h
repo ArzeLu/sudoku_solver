@@ -1,5 +1,5 @@
-#ifndef BOARD_H
-#define BOARD_H
+#ifndef STRUCTURES_H
+#define STRUCTURES_H
 
 #include "libs.h"
 #include "constants.h"
@@ -10,15 +10,9 @@ typedef struct Cell{
     uint16_t candidates;     // bitmask for valid candidates. 1 for valid
 } Cell;
 
-typedef struct Entry{        // Individual cell changes.
-    uint16_t candidates;
-    int index;
-    struct Entry *next;
-} Entry;
-
 typedef struct Record{       // A record of all cell changes.
-    Entry *entries;
-    struct Record *next;
+    bool changed[NUM_LOCALS];
+    int top;
 } Record;
 
 typedef struct Board{
@@ -26,7 +20,6 @@ typedef struct Board{
     int total_layers;
     int solution_layers;
     Cell cells[NUM_CELLS];
-    Record *records;
 } Board;
 
 typedef struct Stats{

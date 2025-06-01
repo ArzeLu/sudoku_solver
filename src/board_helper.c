@@ -1,4 +1,4 @@
-#include "board.h"
+#include "structures.h"
 
 /**
  * @brief Print the board with formatting
@@ -49,7 +49,6 @@ void populate(Board *board, char input[]){
     board->propagations = 0;
     board->total_layers = 0;
     board->solution_layers = 0;
-    board->records = NULL;
 }
 
 /**
@@ -69,5 +68,4 @@ void copy_board(Board *original, Board *copy){
     copy->propagations = original->propagations;
     copy->total_layers = original->total_layers;
     copy->solution_layers = original->solution_layers;
-    copy->records = NULL;
 }

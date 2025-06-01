@@ -1,9 +1,9 @@
 #include "libs.h"
-#include "board.h"
 #include "constants.h"
+#include "structures.h"
 #include "board_helper.h"
 #include "record_helper.h"
-#include "parallel_helper.h"
+#include "sudoku_parallel_helper.h"
 
 static const int row[NUM_CELLS] = ROW_POSITION;
 static const int col[NUM_CELLS] = COL_POSITION;
@@ -12,7 +12,7 @@ static const int row_cell[N][N] = ROW_TRAVERSAL;
 static const int col_cell[N][N] = COL_TRAVERSAL;
 static const int box_cell[N][N] = BOX_TRAVERSAL;
 
-bool solved = false;
+volatile bool solved = false;
 
 /**
  * @brief Readjust the number of possible candidates for all cells.
@@ -78,29 +78,36 @@ bool backtrack(Board *board, int index){
 
     board->total_layers++;
     board->solution_layers++;
-    
-    add_record(board);         // Start a record for this recursion.
-    add_entry(board, index);   // Add the mrv cell in the record.
 
+    Record record;
+    record.top = 0;
+
+    Cell *cell = &board->cells[index];
     uint16_t candidates = board->cells[index].candidates;
+    uint16_t backup = candidates;
 
     while(candidates){
         int value = bit_position(candidates);
-        edit_cell(board, index, value, candidates);
+
+        cell->value = value;
+        cell->candidates = 0;
+        cell->remainder = 0;
         
         if(forward_check(board, index)){
-            update_neighbors(board, index);
+            update_neighbors(board, &record, index);
 
             if(backtrack(board, find_mrv_cell(board)))
                 return true;
 
-            reset_neighbors(board);
+            reset_neighbors(board, &record, index);
         }
         candidates ^= (1 << value);
     }
-
+    
+    cell->value = 0;
+    cell->candidates = backup;
+    cell->remainder = pop_count(backup);
     board->solution_layers--;
-    rollback(board);
     return false;
 }
 

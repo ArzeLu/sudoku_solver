@@ -1,7 +1,7 @@
 #ifndef PARALLEL_HELPER_H
 #define PARALLEL_HELPER_H
 
-#include "board.h"
+#include "structures.h"
 
 void print_board(Board *board);
 void populate(Board *board, char input[]);

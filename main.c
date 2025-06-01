@@ -1,10 +1,10 @@
 /// Arze Lu
 /// https://github.com/ArzeLu/sudoku_solver/
 
-#include "parallel_helper.h"
-#include "sudoku_parallel.h"
-#include "board.h"
+#include "structures.h"
 #include "board_helper.h"
+#include "sudoku_parallel.h"
+#include "sudoku_parallel_helper.h"
 
 /// Take in two arguments: 
 /// number of threads, and the board in 1D array form. Zero for empty cell.
